@@ -13,11 +13,12 @@ Note:  the log4j-detector only recursively enters zip archives.  It does not ent
 
 2nd note:  for zips-inside-zips our scanner does load the inner-zip completely into memory (using ByteArrayInputStream) before attempting to scan it.  You might need to give Java some extra memory if you have extremely large inner-zips on your system (e.g., 1 GB or larger).
 
-# Build from source:
+# Build From Source:
 ```
 git clone https://github.com/mergebase/log4j-detector.git
 cd log4j-detector/
 mvn install
+java -jar target/log4j-detector-2021.12.12.jar
 ```
 
 # License
