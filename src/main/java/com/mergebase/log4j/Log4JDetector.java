@@ -31,6 +31,49 @@ public class Log4JDetector {
 
     private static byte[] IS_LOG4J_SAFE_CONDITION2 = Bytes.fromString("Invalid JNDI URI - {}");
 
+    private static boolean verbose = false;
+    private static boolean foundHits = false;
+
+    public static void main(String[] args) throws Exception {
+        List<String> argsList = new ArrayList<>(Arrays.asList(args));
+        Iterator<String> it = argsList.iterator();
+        while (it.hasNext()) {
+            final String argOrig = it.next();
+            if ("--verbose".equals(argOrig)) {
+                verbose = true;
+                it.remove();
+            } else {
+                File f = new File(argOrig);
+                if (!f.exists()) {
+                    System.out.println("Invalid file: [" + f.getPath() + "]");
+                    System.exit(102);
+                }
+            }
+        }
+
+        if (argsList.isEmpty()) {
+            System.out.println();
+            System.out.println("Usage: java -jar log4j-detector-2021.12.12.jar [--verbose] [paths to scan...]");
+            System.out.println();
+            System.out.println("About - MergeBase log4j detector (version 2021.12.12)");
+            System.out.println("Docs  - https://mergebase.com/log4j-detector/");
+            System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
+            System.out.println();
+            System.exit(100);
+        }
+
+        System.out.println("-- Analyzing paths (could take a long time).");
+        System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
+        for (String arg : argsList) {
+            File dir = new File(arg);
+            analyze(dir);
+        }
+        if (!foundHits) {
+            System.out.println("-- No Log4J 2.x samples found in supplied paths: " + argsList);
+            System.out.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 !  :-) ");
+        }
+    }
+
     private final static Comparator<File> FILES_ORDER_BY_NAME = new Comparator<File>() {
         @Override
         public int compare(File f1, File f2) {
@@ -72,7 +115,9 @@ public class Log4JDetector {
             return;
         }
 
-        System.err.println("-- Examining " + zipPath + "... ");
+        if (verbose) {
+            System.err.println("-- Examining " + zipPath + "... ");
+        }
         boolean isZip = false;
         boolean conditionsChecked = false;
         boolean[] conditions = new boolean[9];
@@ -93,7 +138,7 @@ public class Log4JDetector {
             }
             final String path = ze.getName();
             final String fullPath = zipPath + "!/" + path;
-            byte[] b = null;
+            byte[] b;
             try {
                 b = Bytes.streamToBytes(zin, false);
             } catch (Exception e) {
@@ -183,8 +228,9 @@ public class Log4JDetector {
                         buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
                     }
                 } else {
-                    buf.append("<= 2.0-beta9 _POTENTIALLY_SAFE_ :-|");
+                    buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-|");
                 }
+                foundHits = true;
                 System.out.println(buf);
             }
 
@@ -265,34 +311,6 @@ public class Log4JDetector {
             e.printStackTrace(System.out);
         } finally {
             myZipper.close();
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        List<String> argsList = new ArrayList<>(Arrays.asList(args));
-        Iterator<String> it = argsList.iterator();
-        while (it.hasNext()) {
-            final String argOrig = it.next();
-            File f = new File(argOrig);
-            if (!f.exists()) {
-                System.out.println("Invalid file: [" + f.getPath() + "]");
-                System.exit(102);
-            }
-        }
-
-        if (argsList.isEmpty()) {
-            System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.12.jar [paths to scan...]");
-            System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.12)");
-            System.out.println("Docs  - https://mergebase.com/log4j-detector/");
-            System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
-            System.out.println();
-            System.exit(100);
-        }
-        for (String arg : argsList) {
-            File dir = new File(arg);
-            analyze(dir);
         }
     }
 
