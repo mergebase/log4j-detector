@@ -11,8 +11,8 @@ mvn install
 GPL version 3.0
 
 # How Does It Work?
-The Java compiler stores String literals directly in the compiled *.class files.  If it detects a file named "JndiManager.class"
-on your file-system, it then examines that file for this String: "Invalid JNDI URI - {}".  Turns out that String literal
+The Java compiler stores String literals directly in the compiled *.class files.  If log4j-detector detects a file named "JndiManager.class"
+on your file-system, it then examines that file for this String: "Invalid JNDI URI - {}".  Turns out that specific String literal
 is only present in the patched version of Log4J (version 2.15.0).  Any versions of Log4J without that String are vulnerable.
 
 # What About Log4J 1.2.x ?
