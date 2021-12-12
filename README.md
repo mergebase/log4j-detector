@@ -4,6 +4,8 @@ Detects log4j versions on your file-system, including deeply recursively nested 
 # Example usage:
 java -jar log4j-detector-2021.12.12.jar [path-to-scan] > hits.txt
 
+![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
+
 # Build from source:
 mvn install
 
