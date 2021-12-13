@@ -2,7 +2,7 @@
 Detects log4j versions on your file-system, including deeply recursively nested copies (jars inside jars inside jars).
 
 # Example usage:
-java -jar log4j-detector-2021.12.12.jar [path-to-scan] > hits.txt
+java -jar log4j-detector-2021.12.13.jar [path-to-scan] > hits.txt
 
 ![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
 
@@ -25,7 +25,7 @@ Note:  the log4j-detector only recursively enters zip archives.  It does not ent
 git clone https://github.com/mergebase/log4j-detector.git
 cd log4j-detector/
 mvn install
-java -jar target/log4j-detector-2021.12.12.jar
+java -jar target/log4j-detector-2021.12.13.jar
 ```
 
 # License
