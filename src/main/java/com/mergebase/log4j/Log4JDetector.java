@@ -53,10 +53,13 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.12.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.13.jar [--verbose] [paths to scan...]");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.12)");
-            System.out.println("Docs  - https://mergebase.com/log4j-detector/");
+            System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
+            System.out.println("             2 = At least one vulnerable Log4J version found.");
+            System.out.println();
+            System.out.println("About - MergeBase log4j detector (version 2021.12.13)");
+            System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
@@ -68,8 +71,10 @@ public class Log4JDetector {
             File dir = new File(arg);
             analyze(dir);
         }
-        if (!foundHits) {
-            System.out.println("-- No Log4J 2.x samples found in supplied paths: " + argsList);
+        if (foundHits) {
+            System.exit(2);
+        } else {
+            System.out.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + argsList);
             System.out.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 !  :-) ");
         }
     }
@@ -230,7 +235,9 @@ public class Log4JDetector {
                 } else {
                     buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-|");
                 }
-                foundHits = true;
+                if (!isSafe) {
+                    foundHits = true;
+                }
                 System.out.println(buf);
             }
 
