@@ -118,6 +118,10 @@ public class Log4JDetector {
             zin = zipper.getFreshZipStream();
         } catch (Exception e) {
             System.out.println("-- Problem: " + zipPath + " - " + e);
+            if (verbose) {
+                System.err.println("-- Problem: " + zipPath + " - " + e);
+                e.printStackTrace(System.err);
+            }
             return;
         }
         if (zin == null) {
@@ -136,6 +140,10 @@ public class Log4JDetector {
                 ze = zin.getNextEntry();
             } catch (Exception oops) {
                 System.out.println("-- Problem " + zipPath + " - " + oops);
+                if (verbose) {
+                    System.err.println("-- Problem: " + zipPath + " - " + oops);
+                    oops.printStackTrace(System.err);
+                }
                 break;
             }
             if (ze == null) {
@@ -146,20 +154,30 @@ public class Log4JDetector {
             if (ze.isDirectory()) {
                 continue;
             }
+
+            long zipEntrySize = ze.getSize();
             final String path = ze.getName();
             final String fullPath = zipPath + "!/" + path;
-            byte[] b;
-            try {
-                b = Bytes.streamToBytes(zin, false);
-            } catch (Exception e) {
-                continue;
+            final String PATH = path.toUpperCase(Locale.ENGLISH);
+            boolean isSubZip = PATH.endsWith(".ZIP") || PATH.endsWith(".WAR") || PATH.endsWith(".EAR") || PATH.endsWith(".JAR") || PATH.endsWith(".AAR");
+            boolean isClassEntry = PATH.endsWith(".CLASS");
+
+            byte[] b = new byte[0];
+            if (isSubZip || isClassEntry) {
+                try {
+                    b = Bytes.streamToBytes(zin, false);
+                } catch (Exception e) {
+                    System.out.println("-- Problem - could not extract " + fullPath + " (size=" + zipEntrySize + ") - " + e);
+                    if (verbose) {
+                        System.err.println("-- Problem - could not extract " + fullPath + " (size=" + zipEntrySize + ") - " + e);
+                        e.printStackTrace(System.err);
+                    }
+                    continue;
+                }
             }
             final byte[] bytes = b;
-            String PATH = path.toUpperCase(Locale.ENGLISH);
 
-            // System.out.println("-- examining... " + fullPath);
-
-            if (PATH.endsWith(".ZIP") || PATH.endsWith(".WAR") || PATH.endsWith(".EAR") || PATH.endsWith(".JAR") || PATH.endsWith(".AAR")) {
+            if (isSubZip) {
                 try {
                     Zipper recursiveZipper = new Zipper() {
                         public JarInputStream getFreshZipStream() {
@@ -245,9 +263,9 @@ public class Log4JDetector {
                 }
                 System.out.println(buf);
             }
-
         }
 
+        /*
         if (!isZip) {
             File f = new File(zipPath);
             if (f.canRead() && f.length() < 5000000) {
@@ -269,6 +287,7 @@ public class Log4JDetector {
                 }
             }
         }
+         */
     }
 
     private static boolean containsMatch(byte[] bytes) {
