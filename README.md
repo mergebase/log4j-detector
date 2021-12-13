@@ -31,3 +31,8 @@ is only present in the patched version of Log4J (version 2.15.0).  Any versions 
 
 # What About Log4J 1.2.x ?
 Only versions of Log4J 2.x (from 2.0-beta9 to 2.14.1) are vulnerable to CVE-2021-44228.
+
+# What Is MergeBase All About?
+We're an SCA company (software composition analysis) - just like Snyk, Sonatype, Blackduck, etc. We help companies detect and manage vulnerable open-source libraries in their software. Check us out! [mergebase.com](https://mergebase.com/pricing/)
+
+
