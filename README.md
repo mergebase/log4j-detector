@@ -1,5 +1,6 @@
 # log4j-detector
 Detects log4j versions on your file-system, including deeply recursively nested copies (jars inside jars inside jars).
+Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
 # Example usage:
 java -jar log4j-detector-2021.12.13.jar [path-to-scan] > hits.txt
