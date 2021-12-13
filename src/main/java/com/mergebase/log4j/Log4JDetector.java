@@ -282,16 +282,8 @@ public class Log4JDetector {
                 Util.close(zin, bin, fin);
                 try {
                     fin = new FileInputStream(zipFile);
-                    fin.close();
-
-                    fin = new FileInputStream(zipFile);
-                    fin.close();
-
-                    fin = new FileInputStream(zipFile);
                     bin = new BufferedInputStream(fin);
                     zin = new JarInputStream(bin);
-
-
                     return zin;
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
