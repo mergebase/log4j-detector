@@ -121,7 +121,7 @@ public class Log4JDetector {
             return;
         }
         if (zin == null) {
-            System.out.println("-- Problem: " + zipPath + " NULL !?!");
+            System.out.println("-- Problem: " + zipPath + " - NULL!?!");
             return;
         }
 
@@ -135,7 +135,7 @@ public class Log4JDetector {
             try {
                 ze = zin.getNextEntry();
             } catch (Exception oops) {
-                System.out.println("-- Problem: " + oops);
+                System.out.println("-- Problem " + zipPath + " - " + oops);
                 break;
             }
             if (ze == null) {
