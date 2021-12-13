@@ -353,7 +353,13 @@ public class Log4JDetector {
                 }
             }
         } else {
-            scan(f);
+            if (f.isFile() || f.isHidden()) {
+                scan(f);
+            } else {
+                if (verbose) {
+                    System.err.println("-- Skipping " + f.getPath() + " - Not a regular file.");
+                }
+            }
         }
     }
 
