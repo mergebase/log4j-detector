@@ -32,7 +32,10 @@ is only present in the patched version of Log4J (version 2.15.0).  Any versions 
 # What About Log4J 1.2.x ?
 Only versions of Log4J 2.x (from 2.0-beta9 to 2.14.1) are vulnerable to CVE-2021-44228.
 
+# How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?
+Great question! Since we include the source code (all 600 lines of Java), the steps to build it, and since this tool has zero dependencies, it shouldn't take too long to carefully study the code to your satisfaction.
+
 # What Is MergeBase All About?
-We're an SCA company (software composition analysis) - just like Snyk, Sonatype, Blackduck, etc. We help companies detect and manage vulnerable open-source libraries in their software. Check us out! [mergebase.com](https://mergebase.com/pricing/)
+MergeBase is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable open-source libraries in their software. Check us out! [mergebase.com](https://mergebase.com/pricing/)
 
 
