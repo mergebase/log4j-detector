@@ -6,6 +6,13 @@ java -jar log4j-detector-2021.12.12.jar [path-to-scan] > hits.txt
 
 ![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
 
+# Caveats
+
+- It currently skips directories / files that current user does not have permission to read.  It does not say anything about this.
+- It ignores symlinks (and similarly says nothing about this).
+
+We plan to fix both of these issues by December 15th, 2021.
+
 # What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about?
 The "!" means the log4j-detector entered a zip archive (e.g., *.zip, *.ear, *.war, *.aar, *.jar).  Since zip files can contain zip files, a single result might contain more than one "!" indicator in its result.
 
