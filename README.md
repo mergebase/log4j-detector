@@ -58,6 +58,6 @@ Only versions of Log4J 2.x (from 2.0-beta9 to 2.14.1) are vulnerable to CVE-2021
 Great question! Since we include the complete source code here in Github (all 600 lines of Java), as well as the steps to build it, and since this tool has zero dependencies, it shouldn't take too long to carefully study the code to your satisfaction. If you don't trust Maven you can go directly into the "src/main/java/com/mergebase/log4j" directory and type "javac \*.java".  That works, too!
 
 # What Is MergeBase All About?
-[MergeBase](https://mergebase.com/) is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable open-source libraries in their software. Check us out! We have great accuracy, language support, and we're not too expensive, either: [mergebase.com/pricing](https://mergebase.com/pricing/)
+[MergeBase](https://mergebase.com/) is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable open-source libraries in their software. Check us out! We have great accuracy, great language support, and we're not too expensive, either: [mergebase.com/pricing](https://mergebase.com/pricing/)
 
 
