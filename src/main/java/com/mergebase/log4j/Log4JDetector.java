@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,18 +21,19 @@ import java.util.zip.ZipInputStream;
 
 public class Log4JDetector {
 
-    private static final String FILE_LOG4J_1 = "core/LogEvent.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_2 = "core/Appender.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_3 = "core/Filter.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_4 = "core/Layout.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_5 = "core/LoggerContext.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toUpperCase(Locale.ROOT);
-    private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toUpperCase(Locale.ROOT);
+    private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_3 = "core/Filter.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_4 = "core/Layout.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_5 = "core/LoggerContext.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toLowerCase(Locale.ROOT);
 
     private static byte[] IS_LOG4J_SAFE_CONDITION2 = Bytes.fromString("Invalid JNDI URI - {}");
 
     private static boolean verbose = false;
+    private static boolean debug = false;
     private static boolean foundHits = false;
 
     public static void main(String[] args) throws Exception {
@@ -39,7 +41,10 @@ public class Log4JDetector {
         Iterator<String> it = argsList.iterator();
         while (it.hasNext()) {
             final String argOrig = it.next();
-            if ("--verbose".equals(argOrig)) {
+            if ("--debug".equals(argOrig)) {
+                debug = true;
+                it.remove();
+            } else if ("--verbose".equals(argOrig)) {
                 verbose = true;
                 it.remove();
             } else {
@@ -110,10 +115,7 @@ public class Log4JDetector {
             final String zipPath, final Zipper zipper
     ) {
 
-        ZipEntry ze;
         ZipInputStream zin;
-
-        // 1st pass... look for archives inside the archive
         try {
             zin = zipper.getFreshZipStream();
         } catch (Exception e) {
@@ -125,7 +127,7 @@ public class Log4JDetector {
             return;
         }
         if (zin == null) {
-            System.out.println("-- Problem: " + zipPath + " - NULL!?!");
+            System.out.println("-- Problem: " + zipPath + " - zin=NULL!?!");
             return;
         }
 
@@ -135,6 +137,7 @@ public class Log4JDetector {
         boolean isZip = false;
         boolean conditionsChecked = false;
         boolean[] conditions = new boolean[9];
+        ZipEntry ze;
         while (true) {
             try {
                 ze = zin.getNextEntry();
@@ -156,12 +159,27 @@ public class Log4JDetector {
             }
 
             long zipEntrySize = ze.getSize();
-            final String path = ze.getName();
+            final String path = ze.getName().trim();
             final String fullPath = zipPath + "!/" + path;
-            final String PATH = path.toUpperCase(Locale.ENGLISH);
-            boolean isSubZip = PATH.endsWith(".ZIP") || PATH.endsWith(".WAR") || PATH.endsWith(".EAR") || PATH.endsWith(".JAR") || PATH.endsWith(".AAR");
-            boolean isClassEntry = PATH.endsWith(".CLASS");
 
+            boolean isSubZip = false;
+            boolean isClassEntry = false;
+            int c = path.lastIndexOf('.');
+            if (c >= 0) {
+                String suffix = path.substring(c + 1);
+                if ("class".equalsIgnoreCase(suffix)) {
+                    isClassEntry = true;
+                } else if ("zip".equalsIgnoreCase(suffix)
+                        || "jar".equalsIgnoreCase(suffix)
+                        || "war".equalsIgnoreCase(suffix)
+                        || "ear".equalsIgnoreCase(suffix)
+                        || "aar".equalsIgnoreCase(suffix)) {
+                    isSubZip = true;
+                }
+            }
+            if (debug) {
+                System.err.println("-- DEBUG - " + fullPath + " size=" + zipEntrySize + " isZip=" + isSubZip + " isClass=" + isClassEntry);
+            }
             byte[] b = new byte[0];
             if (isSubZip || isClassEntry) {
                 try {
@@ -201,21 +219,22 @@ public class Log4JDetector {
 
 
             } else {
-                if (PATH.endsWith(FILE_LOG4J_1)) {
+                String pathLower = path.toLowerCase(Locale.ROOT);
+                if (pathLower.endsWith(FILE_LOG4J_1)) {
                     conditions[0] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_2)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_2)) {
                     conditions[1] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_3)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_3)) {
                     conditions[2] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_4)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_4)) {
                     conditions[3] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_5)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_5)) {
                     conditions[4] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_2_10)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_2_10)) {
                     conditions[5] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_VULNERABLE)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
                     conditions[6] = true;
-                } else if (PATH.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
+                } else if (pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
                     conditions[7] = true;
                     if (containsMatch(bytes)) {
                         conditions[8] = true;
@@ -338,7 +357,16 @@ public class Log4JDetector {
     }
 
     private static void analyze(File f) {
-        boolean isSymlink = Files.isSymbolicLink(f.toPath());
+        Path p = null;
+        try {
+            p = f.toPath();
+        } catch (Exception e) {
+            // oh well
+            if (verbose) {
+                System.err.println("Cannot determine if " + f.getPath() + " is symlink: " + e);
+            }
+        }
+        boolean isSymlink = p != null && Files.isSymbolicLink(p);
         boolean cannotRead = !f.canRead();
         if (isSymlink || cannotRead) {
             return;
