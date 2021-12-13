@@ -323,9 +323,11 @@ public class Log4JDetector {
 
         if (f.isDirectory()) {
             File[] fileList = f.listFiles();
-            Arrays.sort(fileList, FILES_ORDER_BY_NAME);
-            for (File ff : fileList) {
-                analyze(ff);
+            if (fileList != null) {
+                Arrays.sort(fileList, FILES_ORDER_BY_NAME);
+                for (File ff : fileList) {
+                    analyze(ff);
+                }
             }
         } else {
             scan(f);
