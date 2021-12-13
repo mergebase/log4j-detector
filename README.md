@@ -21,6 +21,20 @@ Note:  the log4j-detector only recursively enters zip archives.  It does not ent
 
 2nd note:  for zips-inside-zips our scanner does load the inner-zip completely into memory (using ByteArrayInputStream) before attempting to scan it.  You might need to give Java some extra memory if you have extremely large inner-zips on your system (e.g., 1 GB or larger).
 
+# Usage
+```
+java -jar log4j-detector-2021.12.13.jar 
+
+Usage: java -jar log4j-detector-2021.12.13.jar [--verbose] [paths to scan...]
+
+Exit codes:  0 = No vulnerable Log4J versions found.
+             2 = At least one vulnerable Log4J version found.
+
+About - MergeBase log4j detector (version 2021.12.13)
+Docs  - https://github.com/mergebase/log4j-detector 
+(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.
+```
+
 # Build From Source:
 ```
 git clone https://github.com/mergebase/log4j-detector.git
