@@ -108,15 +108,20 @@ public class Log4JDetector {
 
     private static void findLog4jRecursive(
             final String zipPath, final Zipper zipper
-    ) throws IOException {
+    ) {
 
         ZipEntry ze;
         ZipInputStream zin;
 
         // 1st pass... look for archives inside the archive
-        zin = zipper.getFreshZipStream();
+        try {
+            zin = zipper.getFreshZipStream();
+        } catch (Exception e) {
+            System.out.println("-- Problem: " + zipPath + " - " + e);
+            return;
+        }
         if (zin == null) {
-            System.out.println(zipPath + " NULL !");
+            System.out.println("-- Problem: " + zipPath + " NULL !?!");
             return;
         }
 
@@ -130,7 +135,7 @@ public class Log4JDetector {
             try {
                 ze = zin.getNextEntry();
             } catch (Exception oops) {
-                System.err.println("-- Problem: " + oops);
+                System.out.println("-- Problem: " + oops);
                 break;
             }
             if (ze == null) {
