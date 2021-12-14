@@ -2,6 +2,10 @@
 Detects log4j versions on your file-system, including deeply recursively nested copies (jars inside jars inside jars).
 Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
+Currently detects log4j-core versions 2.12.2, 2.15.0 and 2.16.0 as SAFE.  All other versions as VULNERABLE (although it does report pre-2.0-beta9 as "POTENTIALLY_SAFE").
+
+Can correctly handle executable spring-boot jars/wars, as well as dependencies blended into uber jars and shaded jars.
+
 # Example usage:
 java -jar log4j-detector-2021.12.14.jar [path-to-scan] > hits.txt
 
