@@ -62,12 +62,12 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.13.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.14.jar [--verbose] [paths to scan...]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             2 = At least one vulnerable Log4J version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.13)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.14)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
