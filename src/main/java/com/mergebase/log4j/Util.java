@@ -21,15 +21,15 @@ public class Util {
     }
 
     public static void close(Object o1, Object o2, Object o3, Object o4, Object o5) {
-        close(REGULAR_CLOSE, o1, o2, o3, o4, o5);
+        close(REGULAR_CLOSE, new Object[]{o1, o2, o3, o4, o5});
     }
 
-    private static void close(int flag, Object... closeArgs) {
+    private static void close(int flag, Object[] closeArgs) {
         if (closeArgs == null || closeArgs.length == 0) {
             return;
         }
 
-        LinkedList<Throwable> closingProblems = new LinkedList<>();
+        LinkedList<Throwable> closingProblems = new LinkedList<Throwable>();
         for (Object o : closeArgs) {
             if (o == null) {
                 continue;

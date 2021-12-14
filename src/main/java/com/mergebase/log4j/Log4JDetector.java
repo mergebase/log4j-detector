@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -41,8 +39,12 @@ public class Log4JDetector {
     private static boolean debug = false;
     private static boolean foundHits = false;
 
-    public static void main(String[] args) throws Exception {
-        List<String> argsList = new ArrayList<>(Arrays.asList(args));
+    public static void main(String[] args) {
+        List<String> argsList = new ArrayList<String>();
+        for (String arg : args) {
+            argsList.add(arg);
+        }
+
         Iterator<String> it = argsList.iterator();
         while (it.hasNext()) {
             final String argOrig = it.next();
@@ -497,17 +499,31 @@ public class Log4JDetector {
         return pos;
     }
 
+    public static boolean isSymlink(File file) throws IOException {
+        if (file == null) {
+            return false;
+        }
+        File canon;
+        if (file.getParent() == null) {
+            canon = file;
+        } else {
+            File canonDir = file.getParentFile().getCanonicalFile();
+            canon = new File(canonDir, file.getName());
+        }
+        return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
+    }
+
     private static void analyze(File f) {
-        Path p = null;
+        boolean isSymlink = false;
         try {
-            p = f.toPath();
+            isSymlink = isSymlink(f);
         } catch (Exception e) {
             // oh well
             if (verbose) {
                 System.err.println("Cannot determine if " + f.getPath() + " is symlink: " + e);
             }
         }
-        boolean isSymlink = p != null && Files.isSymbolicLink(p);
+
         boolean cannotRead = !f.canRead();
         if (isSymlink || cannotRead) {
             return;

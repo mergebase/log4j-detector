@@ -4,12 +4,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 public class Bytes {
 
     public static final int SIZE_KEY = 0;
     public static final int LAST_READ_KEY = 1;
+
+    private static final Charset UTF_8;
+
+    static {
+        try {
+            UTF_8 = Charset.forName("UTF-8");
+        } catch (Exception e) {
+            throw new RuntimeException("could not obtain UTF-8 charset...", e);
+        }
+    }
 
     public static byte[] fileToBytes(File f) {
         FileInputStream fin;
@@ -32,7 +42,7 @@ public class Bytes {
     }
 
     public static byte[] fromString(String s) {
-        return s.getBytes(StandardCharsets.UTF_8);
+        return s.getBytes(UTF_8);
     }
 
     public static byte[] streamToBytes(final InputStream in) throws IOException {
