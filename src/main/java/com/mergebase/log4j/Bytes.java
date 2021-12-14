@@ -36,17 +36,26 @@ public class Bytes {
     }
 
     public static byte[] streamToBytes(final InputStream in) throws IOException {
-        return streamToBytes(in, true);
+        return streamToBytes(in, true, -1);
     }
 
     public static byte[] streamToBytes(final InputStream in, final boolean doClose) throws IOException {
-        return streamToBytes(in, doClose, true);
+        return streamToBytes(in, doClose, true, -1);
+    }
+
+    public static byte[] streamToBytes(final InputStream in, final boolean doClose, final long lengthHint) throws IOException {
+        return streamToBytes(in, doClose, true, lengthHint);
     }
 
     public static byte[] streamToBytes(
-            final InputStream in, final boolean doClose, final boolean doResize
+            final InputStream in, final boolean doClose, final boolean doResize, long lengthHint
     ) throws IOException {
-        byte[] buf = new byte[32768];
+        byte[] buf;
+        if (lengthHint > 0) {
+            buf = new byte[(int) lengthHint];
+        } else {
+            buf = new byte[32768];
+        }
         try {
             int[] status = fill(buf, 0, in);
             int size = status[SIZE_KEY];
@@ -86,7 +95,8 @@ public class Bytes {
                 read += lastRead;
             }
         }
-        return new int[]{offset + read, lastRead};
+        // If read + offset == buf.length, we are done!
+        return new int[]{offset + read, read + offset == buf.length ? -1 : lastRead};
     }
 
     public static byte[] resizeArray(final byte[] bytes) {

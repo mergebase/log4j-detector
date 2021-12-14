@@ -3,7 +3,7 @@ Detects log4j versions on your file-system, including deeply recursively nested 
 Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
 # Example usage:
-java -jar log4j-detector-2021.12.13.jar [path-to-scan] > hits.txt
+java -jar log4j-detector-2021.12.14.jar [path-to-scan] > hits.txt
 
 ![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
 
@@ -23,14 +23,14 @@ Note:  the log4j-detector only recursively enters zip archives.  It does not ent
 
 # Usage
 ```
-java -jar log4j-detector-2021.12.13.jar 
+java -jar log4j-detector-2021.12.14.jar 
 
-Usage: java -jar log4j-detector-2021.12.13.jar [--verbose] [paths to scan...]
+Usage: java -jar log4j-detector-2021.12.14.jar [--verbose] [paths to scan...]
 
 Exit codes:  0 = No vulnerable Log4J versions found.
              2 = At least one vulnerable Log4J version found.
 
-About - MergeBase log4j detector (version 2021.12.13)
+About - MergeBase log4j detector (version 2021.12.14)
 Docs  - https://github.com/mergebase/log4j-detector 
 (C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.
 ```
@@ -40,7 +40,7 @@ Docs  - https://github.com/mergebase/log4j-detector
 git clone https://github.com/mergebase/log4j-detector.git
 cd log4j-detector/
 mvn install
-java -jar target/log4j-detector-2021.12.13.jar
+java -jar target/log4j-detector-2021.12.14.jar
 ```
 
 # License
