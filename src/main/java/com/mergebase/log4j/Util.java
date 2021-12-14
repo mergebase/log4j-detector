@@ -16,8 +16,8 @@ public class Util {
     private static final int REGULAR_CLOSE = 0;
     private static final int CLOSE_AND_COMMIT = 1;
 
-    public static void close(Object o1, Object o2) {
-        close(o1, o2, null, null, null);
+    public static void close(Object o1, Object o2, Object o3) {
+        close(o1, o2, o3, null, null);
     }
 
     public static void close(Object o1, Object o2, Object o3, Object o4, Object o5) {

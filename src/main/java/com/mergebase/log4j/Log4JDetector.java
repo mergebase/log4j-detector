@@ -1,5 +1,6 @@
 package com.mergebase.log4j;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -401,36 +402,46 @@ public class Log4JDetector {
     ) {
         Zipper myZipper = new Zipper() {
             private FileInputStream fin;
+            private BufferedInputStream bin;
             private ZipInputStream zin;
 
             public ZipInputStream getFreshZipStream() {
-                Util.close(zin, fin);
+                Util.close(zin, bin, fin);
                 try {
                     fin = new FileInputStream(zipFile);
-                    int pos = getZipStart(fin);
-                    if (pos < 0) {
-                        fin.close();
-                        return null;
-                    }
-                    fin.close();
-                    fin = new FileInputStream(zipFile);
-                    // Advance to beginning of zip...
-                    for (int i = 0; i < pos; i++) {
-                        int c = fin.read();
-                        if (c < 0) {
-                            throw new RuntimeException("Zip closed early i=" + i + " - should be impossible");
+                    bin = new BufferedInputStream(fin);
+                    if (startsWithZipMagic(bin)) {
+                        zin = new ZipInputStream(bin);
+                        return zin;
+                    } else {
+                        int pos = getZipStart(bin);
+                        if (pos < 0) {
+                            bin.close();
+                            fin.close();
+                            return null;
                         }
-                    }
+                        bin.close();
+                        fin.close();
 
-                    zin = new ZipInputStream(fin);
-                    return zin;
+                        fin = new FileInputStream(zipFile);
+                        bin = new BufferedInputStream(fin);
+                        // Advance to beginning of zip...
+                        for (int i = 0; i < pos; i++) {
+                            int c = bin.read();
+                            if (c < 0) {
+                                throw new RuntimeException("Zip closed early i=" + i + " - should be impossible");
+                            }
+                        }
+                        zin = new ZipInputStream(bin);
+                        return zin;
+                    }
                 } catch (IOException ioe) {
                     throw new RuntimeException(ioe);
                 }
             }
 
             public void close() {
-                Util.close(zin, fin);
+                Util.close(zin, bin, fin);
             }
         };
 
@@ -442,6 +453,22 @@ public class Log4JDetector {
             e.printStackTrace(System.out);
         } finally {
             myZipper.close();
+        }
+    }
+
+    private static boolean startsWithZipMagic(BufferedInputStream in) {
+        in.mark(4);
+        try {
+            int[] fourBytes = pop4(in);
+            return isZipSentinel(fourBytes);
+        } catch (IOException ioe) {
+            return false;
+        } finally {
+            try {
+                in.reset();
+            } catch (IOException ioe) {
+                throw new RuntimeException("BufferedInputStream.reset() failed: " + ioe);
+            }
         }
     }
 
@@ -496,7 +523,11 @@ public class Log4JDetector {
             }
         } else {
             if (f.isFile() || f.isHidden()) {
-                scan(f);
+                if (0 == fileType(f.getName())) {
+                    scan(f);
+                } else if (verbose) {
+                    System.err.println("-- Skipping " + f.getPath() + " - Not a zip/jar/war file.");
+                }
             } else {
                 if (verbose) {
                     System.err.println("-- Skipping " + f.getPath() + " - Not a regular file.");
