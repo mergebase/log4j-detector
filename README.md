@@ -6,10 +6,22 @@ Currently detects log4j-core versions 2.12.2, 2.15.0 and 2.16.0 as SAFE.  All ot
 
 Can correctly detect log4j inside executable spring-boot jars/wars, as well as dependencies blended into [uber jars](https://mergebase.com/blog/software-composition-analysis-sca-vs-java-uber-jars/) and shaded jars.
 
-# Example usage:
+# Example Usage:
 java -jar log4j-detector-2021.12.14.jar [path-to-scan] > hits.txt
 
 ![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
+
+# More Example Usage:
+
+```
+java -jar log4j-detector-2021.12.14.jar /var/tmp/l 
+
+/var/tmp/l/log4j-core-2.10.0.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
+/var/tmp/l/log4j-core-2.12.2.jar contains Log4J-2.x   >= 2.12.2 _SAFE_ :-)
+/var/tmp/l/log4j-core-2.14.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
+/var/tmp/l/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _SAFE_ :-)
+/var/tmp/l/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.15.0 _SAFE_ :-)
+```
 
 # Caveats
 
