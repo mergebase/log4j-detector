@@ -11,7 +11,7 @@ public class Bytes {
     public static final int SIZE_KEY = 0;
     public static final int LAST_READ_KEY = 1;
 
-    private static final Charset UTF_8;
+    public static final Charset UTF_8;
 
     static {
         try {

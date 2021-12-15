@@ -535,7 +535,7 @@ public class Log4JDetector {
         return pos;
     }
 
-    private static HashSet<String> visitedDirs = new HashSet<String>();
+    private static HashSet<Long> visited = new HashSet<Long>();
 
     private static void analyze(File f) {
         try {
@@ -548,13 +548,12 @@ public class Log4JDetector {
         }
 
         // Hopefully this catches symlink cycles...
-        if (f.isDirectory()) {
-            String path = f.getPath();
-            if (visitedDirs.contains(path)) {
-                return;
-            } else {
-                visitedDirs.add(path);
-            }
+        String path = f.getPath();
+        long crc = CRC64.hash(path);
+        if (visited.contains(crc)) {
+            return;
+        } else {
+            visited.add(crc);
         }
 
         if (!f.canRead()) {
