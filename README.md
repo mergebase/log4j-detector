@@ -1,7 +1,6 @@
 # log4j-detector
 
-Detects vulnerable log4j versions on your file-system within any application. It is able to even find instances that are
-hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
+Detects log4j versions on your file-system within any application that are vulnerable to cve-2021-44228  cve-2021-45046. It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
 Currently detects log4j-core versions 2.12.2 and 2.16.0 as SAFE, 2.15.0 as OKAY and all other versions as VULNERABLE
 (although it does report pre-2.0-beta9 as "POTENTIALLY_SAFE").
