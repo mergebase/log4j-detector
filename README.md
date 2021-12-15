@@ -93,7 +93,7 @@ Only versions of Log4J 2.x (from 2.0-beta9 to 2.14.1) are vulnerable to CVE-2021
 
 # How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?
 
-Great question! Since we include the complete source code here in Github (all 600 lines of Java), as well as the steps
+Great question! Since we include the complete source code here in Github (all 750 lines of Java), as well as the steps
 to build it, and since this tool has zero dependencies, it shouldn't take too long to carefully study the code to your
 satisfaction. If you don't trust Maven you can go directly into the "src/main/java/com/mergebase/log4j" directory and
 type "javac \*.java". That works, too!
