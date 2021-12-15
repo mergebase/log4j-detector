@@ -24,17 +24,18 @@ java -jar log4j-detector-2021.12.15.jar /var/tmp/l
 /var/tmp/l/log4j-core-2.10.0.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
 /var/tmp/l/log4j-core-2.12.2.jar contains Log4J-2.x   >= 2.12.2 _SAFE_ :-)
 /var/tmp/l/log4j-core-2.14.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
-/var/tmp/l/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _SAFE_ :-)
-/var/tmp/l/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.15.0 _SAFE_ :-)
+/var/tmp/l/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _OKAY_ :-|
+/var/tmp/l/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.16.0 _SAFE_ :-)
 ```
 
-# Caveats
+# Why Report About 2.10.0, 2.15.0, and 2.16.0 ?
 
-- It currently skips directories / files that current user does not have permission to read. It does not say anything
-  about this.
-- It ignores symlinks (and similarly says nothing about this).
+We consider version 2.10.0 important because that's the first version where message lookups can be disabled via config.
 
-We plan to fix both of these issues by December 15th, 2021.
+We consider version 2.15.0 important because that's the first version where default config is not vulnerable to CVE-2021-44228.
+
+And version 2.16.0 is important because it's not vulnerable to CVE-2021-45046. Despite CVE-2021-45046 being much less serious,
+we anticipate everyone will want to patch to 2.16.0.
 
 # What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about?
 
