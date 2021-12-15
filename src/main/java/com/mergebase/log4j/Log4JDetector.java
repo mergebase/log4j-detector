@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -17,6 +18,7 @@ import java.util.zip.ZipInputStream;
 
 public class Log4JDetector {
 
+    private static final String FILE_OLD_LOG4J = "log4j/FileAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_3 = "core/Filter.class".toLowerCase(Locale.ROOT);
@@ -25,6 +27,14 @@ public class Log4JDetector {
     private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toLowerCase(Locale.ROOT);
+
+    private static final String ACTUAL_FILE_LOG4J_2 = "core/Appender.class";
+    private static final String ACTUAL_FILE_LOG4J_3 = "core/Filter.class";
+    private static final String ACTUAL_FILE_LOG4J_4 = "core/Layout.class";
+    private static final String ACTUAL_FILE_LOG4J_5 = "core/LoggerContext.class";
+    private static final String ACTUAL_FILE_LOG4J_2_10 = "core/appender/nosql/NoSqlAppender.class";
+    private static final String ACTUAL_FILE_LOG4J_JNDI_LOOKUP = "core/lookup/JndiLookup.class";
+    private static final String ACTUAL_FILE_LOG4J_JNDI_MANAGER = "core/net/JndiManager.class";
 
     // This occurs in "JndiManager.class" in 2.15.0
     private static byte[] IS_LOG4J_SAFE_2_15_0 = Bytes.fromString("Invalid JNDI URI - {}");
@@ -38,6 +48,7 @@ public class Log4JDetector {
     private static boolean verbose = false;
     private static boolean debug = false;
     private static boolean foundHits = false;
+    private static boolean foundLog4j1 = false;
 
     public static void main(String[] args) {
         List<String> argsList = new ArrayList<String>();
@@ -65,19 +76,20 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.14.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.15.jar [--verbose] [paths to scan...]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
-            System.out.println("             2 = At least one vulnerable Log4J version found.");
+            System.out.println("             1 = At least one legacy Log4J 1.x version found.");
+            System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.14)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.15)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.out.println("-- Analyzing paths (could take a long time).");
+        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.15 (by mergebase.com) analyzing paths (could take a while).");
         System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         for (String arg : argsList) {
             File dir = new File(arg);
@@ -85,9 +97,11 @@ public class Log4JDetector {
         }
         if (foundHits) {
             System.exit(2);
+        } else if (foundLog4j1) {
+            System.exit(1);
         } else {
             System.out.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + argsList);
-            System.out.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 !  :-) ");
+            System.out.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 or CVE-2021-45046 !  :-) ");
         }
     }
 
@@ -198,7 +212,9 @@ public class Log4JDetector {
         boolean isLog4j2_10 = false;
         boolean hasJndiLookup = false;
         boolean hasJndiManager = false;
+        boolean isLog4J1_X = false;
         boolean isLog4j2_15 = false;
+        boolean isLog4j2_16 = false;
         boolean isLog4j2_15_override = false;
         boolean isLog4j2_12_2 = false;
         boolean isLog4j2_12_2_override = false;
@@ -290,7 +306,9 @@ public class Log4JDetector {
 
 
             } else {
-                if (pathLower.endsWith(FILE_LOG4J_1)) {
+                if (pathLower.endsWith(FILE_OLD_LOG4J)) {
+                    isLog4J1_X = true;
+                } else if (pathLower.endsWith(FILE_LOG4J_1)) {
                     log4jProbe[0] = true;
                 } else if (pathLower.endsWith(FILE_LOG4J_2)) {
                     log4jProbe[1] = true;
@@ -313,6 +331,11 @@ public class Log4JDetector {
                     hasJndiManager = true;
                     if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
                         isLog4j2_15 = true;
+                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
+                            isLog4j2_16 = true;
+                        } else {
+                            foundHits = true;
+                        }
                     } else {
                         isLog4j2_15_override = true;
                     }
@@ -344,14 +367,23 @@ public class Log4JDetector {
 
             StringBuilder buf = new StringBuilder();
             if (isLog4j) {
-                buf.append(zipPath).append(" contains Log4J-2.x   ");
+                if (isLog4J1_X) {
+                    buf.append(zipPath).append(" contains Log4J-1.x AND Log4J-2.x _CRAZY_   ");
+                    foundLog4j1 = true;
+                } else {
+                    buf.append(zipPath).append(" contains Log4J-2.x   ");
+                }
                 if (isVulnerable) {
                     if (isLog4j_2_10_0) {
                         if (isSafe) {
                             if (isLog4j_2_12_2) {
                                 buf.append(">= 2.12.2 _SAFE_ :-)");
                             } else {
-                                buf.append(">= 2.15.0 _SAFE_ :-)");
+                                if (isLog4j2_16) {
+                                    buf.append(">= 2.16.0 _SAFE_ :-)");
+                                } else {
+                                    buf.append(">= 2.15.0 _OKAY_ :-|");
+                                }
                             }
                         } else {
                             buf.append(">= 2.10.0 _VULNERABLE_ :-(");
@@ -365,6 +397,10 @@ public class Log4JDetector {
                 if (!isSafe) {
                     foundHits = true;
                 }
+                System.out.println(buf);
+            } else if (isLog4J1_X) {
+                buf.append(zipPath).append(" contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
+                foundLog4j1 = true;
                 System.out.println(buf);
             }
         }
@@ -499,36 +535,32 @@ public class Log4JDetector {
         return pos;
     }
 
-    public static boolean isSymlink(File file) throws IOException {
-        if (file == null) {
-            return false;
-        }
-        File canon;
-        if (file.getParent() == null) {
-            canon = file;
-        } else {
-            File canonDir = file.getParentFile().getCanonicalFile();
-            canon = new File(canonDir, file.getName());
-        }
-        return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
-    }
+    private static HashSet<String> visitedDirs = new HashSet<String>();
 
     private static void analyze(File f) {
-        boolean isSymlink = false;
         try {
-            isSymlink = isSymlink(f);
+            f = f.getCanonicalFile();
         } catch (Exception e) {
             // oh well
             if (verbose) {
-                System.err.println("Cannot determine if " + f.getPath() + " is symlink: " + e);
+                System.err.println("f.getCanonicalFile() failed: " + f.getPath() + " - " + e);
             }
         }
 
-        boolean cannotRead = !f.canRead();
-        if (isSymlink || cannotRead) {
-            return;
+        // Hopefully this catches symlink cycles...
+        if (f.isDirectory()) {
+            String path = f.getPath();
+            if (visitedDirs.contains(path)) {
+                return;
+            } else {
+                visitedDirs.add(path);
+            }
         }
 
+        if (!f.canRead()) {
+            System.out.println("-- Problem: cannot read - " + f.getPath());
+            return;
+        }
         if (f.isDirectory()) {
             File[] fileList = f.listFiles();
             if (fileList != null) {
@@ -539,8 +571,77 @@ public class Log4JDetector {
             }
         } else {
             if (f.isFile() || f.isHidden()) {
-                if (0 == fileType(f.getName())) {
+                int fileType = fileType(f.getName());
+                if (0 == fileType) {
                     scan(f);
+                } else if (1 == fileType) {
+                    boolean maybe = f.getPath().toLowerCase(Locale.ROOT).endsWith(FILE_LOG4J_1);
+                    if (maybe) {
+                        boolean isVulnerable = false;
+                        boolean isLog4J_2_10 = false;
+                        boolean isLog4J_2_12_2 = false;
+                        boolean isNotLog4J_2_12_2 = false;
+                        boolean isLog4J_2_15 = false;
+                        boolean isLog4J_2_16 = false;
+                        if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_2)) {
+                            if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_3)) {
+                                if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_4)) {
+                                    if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_5)) {
+                                        if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_LOOKUP)) {
+                                            isVulnerable = true;
+                                            if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_2_10)) {
+                                                isLog4J_2_10 = true;
+
+                                                // Check for 2.12.2...
+                                                File jndiLookup = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_LOOKUP);
+                                                byte[] bytes = Bytes.fileToBytes(jndiLookup);
+                                                if (!containsMatch(bytes, IS_LOG4J_NOT_SAFE_2_12_2)) {
+                                                    isLog4J_2_12_2 = true;
+                                                }
+
+                                                if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER)) {
+                                                    File jndiManager = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER);
+                                                    bytes = Bytes.fileToBytes(jndiManager);
+                                                    if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
+                                                        isLog4J_2_15 = true;
+                                                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
+                                                            isLog4J_2_16 = true;
+                                                        } else {
+                                                            foundHits = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        StringBuilder buf = new StringBuilder();
+                        buf.append(f.getParentFile().getParent()).append(" contains Log4J-2.x   ");
+                        if (isVulnerable) {
+                            if (isLog4J_2_10) {
+                                if (isLog4J_2_15) {
+                                    if (isLog4J_2_16) {
+                                        buf.append(">= 2.16.0 _SAFE_ :-)");
+                                    } else {
+                                        buf.append(">= 2.15.0 _OKAY_ :-|");
+                                    }
+                                } else {
+                                    if (isLog4J_2_12_2) {
+                                        buf.append(">= 2.12.2 _SAFE_ :-)");
+                                    } else {
+                                        buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                                    }
+                                }
+                            } else {
+                                buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
+                            }
+                        } else {
+                            buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");
+                        }
+                        System.out.println(buf);
+                    }
                 } else if (verbose) {
                     System.err.println("-- Skipping " + f.getPath() + " - Not a zip/jar/war file.");
                 }
@@ -550,6 +651,12 @@ public class Log4JDetector {
                 }
             }
         }
+
+    }
+
+    private static boolean exists(String s) {
+        File f = new File(s);
+        return f.exists() && f.isFile();
     }
 
 }
