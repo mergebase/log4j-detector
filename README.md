@@ -105,6 +105,6 @@ similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help compa
 open-source libraries in their software. Check us out! We have great accuracy, great language support, and we're not too
 expensive, either: [mergebase.com/pricing](https://mergebase.com/pricing/).
 
-We offer 2-week free trials of our SCA product [https://mergebase.com/try/](https://mergebase.com/try/). But if you email our CEO (oscar@mergebase.com) with the subject "log4j-detector" we will extend your free trial to 4-weeks.
+Click on [mergebase.com/try](https://mergebase.com/try/) to start a 2-week free trial of our SCA product. If you email our CEO (oscar@mergebase.com) with the subject "log4j-detector" we will extend your free trial to 4-weeks.
 
 
