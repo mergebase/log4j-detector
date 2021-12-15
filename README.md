@@ -103,6 +103,8 @@ type "javac \*.java". That works, too!
 [MergeBase](https://mergebase.com/) is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're
 similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable
 open-source libraries in their software. Check us out! We have great accuracy, great language support, and we're not too
-expensive, either: [mergebase.com/pricing](https://mergebase.com/pricing/)
+expensive, either: [mergebase.com/pricing](https://mergebase.com/pricing/).
+
+We offer 2-week free trials of our SCA product [https://mergebase.com/try/](https://mergebase.com/try/). But if you email our CEO (oscar@mergebase.com) with the subject "log4j-detector" we will extend your free trial to 4-weeks.
 
 
