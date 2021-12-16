@@ -105,6 +105,9 @@ cd log4j-detector/
 mvn install
 java -jar target/log4j-detector-2021.12.16.jar
 ```
+# Testing:
+
+We maintain a collection of log4j samples here:  https://github.com/mergebase/log4j-samples
 
 # License
 
