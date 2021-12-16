@@ -52,7 +52,13 @@ java -jar log4j-detector-2021.12.15.jar ./samples
 
 **\_POTENTIALLY_SAFE\_** -> The "JndiLookup.class" file is not present, either because your version of Log4J is very old (pre 2.0-beta9), or because someone already removed this file. Make sure it was someone in your team or company that removed "JndiLookup.class" if that's the case, because attackers have been known to remove this file themselves to prevent additional competing attackers from gaining access to compromised systems.
 
-# Why Report About 2.10.0, 2.15.0, and 2.16.0 ?  What About log4j-api-2.x.jar?
+# This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`?
+
+Many scanners (including GitHub's own [Dependabot](/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
+
+At MergeBase we pride ourselves on our scan accuracy. You're already busy enough patching all your systems to upgrade `log4j-core`. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
+
+# Why Report About 2.10.0, 2.15.0, and 2.16.0 ?
 
 We consider version 2.10.0 important because that's the first version where Log4J's vulnerable "message lookup feature" can be disabled via Log4J configuration.
 
