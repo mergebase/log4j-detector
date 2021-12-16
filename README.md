@@ -54,7 +54,7 @@ java -jar log4j-detector-2021.12.15.jar ./samples
 
 # This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`?
 
-Many scanners (including GitHub's own [Dependabot](/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
+Many scanners (including GitHub's own [Dependabot](https://github.com/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
 
 At MergeBase we pride ourselves on our scan accuracy. You're already busy enough patching all your systems to upgrade `log4j-core`. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
 
