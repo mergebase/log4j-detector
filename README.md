@@ -42,15 +42,15 @@ java -jar log4j-detector-2021.12.15.jar ./samples
 
 # Understanding The Results
 
-_VULNERABLE_ -> You need to upgrade or remove this file.
+**\_VULNERABLE\_** -> You need to upgrade or remove this file.
 
-_OKAY_ -> We only report this for Log4J version 2.15.0. We recommend upgrading to 2.16.0.
+**\_OKAY\_** -> We only report this for Log4J version 2.15.0. We recommend upgrading to 2.16.0.
 
-_SAFE_ -> We currently only report this for Log4J versions 2.16.0 and 2.12.2.
+**\_SAFE\_** -> We currently only report this for Log4J versions 2.16.0 and 2.12.2.
 
-_OLD_ -> You are safe from CVE-2021-44228, but should plan to upgrade because Log4J 1.2.x has been EOL for 10 years and has several known-vulnerabilities.
+**\_OLD\_** -> You are safe from CVE-2021-44228, but should plan to upgrade because Log4J 1.2.x has been EOL for 10 years and has several known-vulnerabilities.
 
-_POTENTIALLY_SAFE_ -> The "JndiLookup.class" file is not present, either because your version of Log4J is very old (pre 2.0-beta9), or because someone already removed this file. Make sure it was someone in your team or company that removed "JndiLookup.class" if that's the case, because attackers have been known to remove this file themselves to prevent additional competing attackers from gaining access to compromised systems.
+**\_POTENTIALLY_SAFE\_** -> The "JndiLookup.class" file is not present, either because your version of Log4J is very old (pre 2.0-beta9), or because someone already removed this file. Make sure it was someone in your team or company that removed "JndiLookup.class" if that's the case, because attackers have been known to remove this file themselves to prevent additional competing attackers from gaining access to compromised systems.
 
 # Why Report About 2.10.0, 2.15.0, and 2.16.0 ?  What About log4j-api-2.x.jar?
 
