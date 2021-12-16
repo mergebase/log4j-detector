@@ -1,5 +1,6 @@
 package com.mergebase.log4j;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -105,8 +106,21 @@ public class Bytes {
                 read += lastRead;
             }
         }
+
+        if (lastRead != -1 && read + offset == buf.length) {
+            if (in.markSupported()) {
+                in.mark(1);
+                int peek = in.read();
+                if (peek == -1) {
+                    lastRead = -1;
+                } else {
+                    in.reset();
+                }
+            }
+        }
+
         // If read + offset == buf.length, we are done!
-        return new int[]{offset + read, read + offset == buf.length ? -1 : lastRead};
+        return new int[]{offset + read, lastRead};
     }
 
     public static byte[] resizeArray(final byte[] bytes) {
@@ -161,4 +175,11 @@ public class Bytes {
         return failure;
     }
 
+    public static void disabledMain(String[] args) throws Exception {
+        String abc = "abc";
+        byte[] bytes = abc.getBytes(UTF_8);
+        ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+        byte[] result = Bytes.streamToBytes(bin, false, 2);
+        System.out.println("AFTER = [" + new String(result, UTF_8) + "]");
+    }
 }

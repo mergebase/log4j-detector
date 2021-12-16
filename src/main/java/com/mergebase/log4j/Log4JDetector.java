@@ -76,20 +76,20 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.15.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.16.jar [--verbose] [paths to scan...]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.15)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.16)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.15 (by mergebase.com) analyzing paths (could take a while).");
+        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.16 (by mergebase.com) analyzing paths (could take a while).");
         System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         for (String arg : argsList) {
             File dir = new File(arg);
@@ -179,231 +179,228 @@ public class Log4JDetector {
     ) {
         ZipInputStream zin;
         try {
-            zin = zipper.getFreshZipStream();
-        } catch (Exception e) {
-            System.out.println("-- Problem: " + zipPath + " - " + e);
-            if (verbose) {
+            try {
+                zin = zipper.getFreshZipStream();
+            } catch (Exception e) {
                 System.err.println("-- Problem: " + zipPath + " - " + e);
-                e.printStackTrace(System.err);
-            }
-            return;
-        }
-        if (zin == null) {
-            if (fileType(zipPath) == 0) {
-                System.out.println("-- Problem: " + zipPath + " - Not actually a zip!?! (no magic number)");
                 if (verbose) {
-                    System.err.println("-- Problem: " + zipPath + " - Not actually a zip!?! (no magic number)");
+                    e.printStackTrace(System.err);
                 }
+                return;
+            }
+            if (zin == null) {
+                if (fileType(zipPath) == 0) {
+                    System.err.println("-- Problem: " + zipPath + " - Not actually a zip!?! (no magic number)");
+                } else {
+                    if (verbose) {
+                        System.err.println("-- Ignoring: " + zipPath + " - (not a zip)");
+                    }
+                }
+                return;
             } else {
                 if (verbose) {
-                    System.err.println("-- Ignoring: " + zipPath + " - (not a zip)");
+                    System.err.println("-- Examining " + zipPath + "... ");
                 }
             }
-            return;
-        } else {
-            if (verbose) {
-                System.err.println("-- Examining " + zipPath + "... ");
-            }
-        }
 
-        boolean isZip = false;
-        boolean conditionsChecked = false;
-        boolean[] log4jProbe = new boolean[5];
-        boolean isLog4j2_10 = false;
-        boolean hasJndiLookup = false;
-        boolean hasJndiManager = false;
-        boolean isLog4J1_X = false;
-        boolean isLog4j2_15 = false;
-        boolean isLog4j2_16 = false;
-        boolean isLog4j2_15_override = false;
-        boolean isLog4j2_12_2 = false;
-        boolean isLog4j2_12_2_override = false;
-        ZipEntry ze;
-        while (true) {
-            try {
-                ze = zin.getNextEntry();
-            } catch (Exception oops) {
-                System.out.println("-- Problem " + zipPath + " - " + oops);
-                if (verbose) {
-                    System.err.println("-- Problem: " + zipPath + " - " + oops);
-                    oops.printStackTrace(System.err);
-                }
-                break;
-            }
-            if (ze == null) {
-                break;
-            }
-            isZip = true;
-            conditionsChecked = true;
-            if (ze.isDirectory()) {
-                continue;
-            }
-
-            long zipEntrySize = ze.getSize();
-            final String path = ze.getName().trim();
-            String pathLower = path.toLowerCase(Locale.ROOT);
-            final String fullPath = zipPath + "!/" + path;
-
-            int fileType = fileType(path);
-            boolean isSubZip = fileType == 0;
-            boolean isClassEntry = fileType == 1;
-            boolean needClassBytes = false;
-
-            if (isClassEntry && pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
-                needClassBytes = true;
-            } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
-                needClassBytes = true;
-            }
-
-            if (debug) {
-                System.err.println("-- DEBUG - " + fullPath + " size=" + zipEntrySize + " isZip=" + isSubZip + " isClass=" + isClassEntry);
-            }
-            byte[] b = new byte[0];
-            if (isSubZip || needClassBytes) {
+            boolean isZip = false;
+            boolean conditionsChecked = false;
+            boolean[] log4jProbe = new boolean[5];
+            boolean isLog4j2_10 = false;
+            boolean hasJndiLookup = false;
+            boolean hasJndiManager = false;
+            boolean isLog4J1_X = false;
+            boolean isLog4j2_15 = false;
+            boolean isLog4j2_16 = false;
+            boolean isLog4j2_15_override = false;
+            boolean isLog4j2_12_2 = false;
+            boolean isLog4j2_12_2_override = false;
+            ZipEntry ze;
+            while (true) {
                 try {
-                    b = Bytes.streamToBytes(zin, false, zipEntrySize);
-                } catch (Exception e) {
-                    System.out.println("-- Problem - could not extract " + fullPath + " (size=" + zipEntrySize + ") - " + e);
+                    ze = zin.getNextEntry();
+                } catch (Exception oops) {
+                    System.err.println("-- Problem " + zipPath + " - " + oops);
                     if (verbose) {
-                        System.err.println("-- Problem - could not extract " + fullPath + " (size=" + zipEntrySize + ") - " + e);
-                        e.printStackTrace(System.err);
+                        oops.printStackTrace(System.err);
                     }
+                    return;
+                }
+                if (ze == null) {
+                    break;
+                }
+                conditionsChecked = true;
+                if (ze.isDirectory()) {
                     continue;
                 }
-            }
-            final byte[] bytes = b;
 
-            if (isSubZip) {
-                try {
-                    Zipper recursiveZipper = new Zipper() {
-                        public ZipInputStream getFreshZipStream() {
-                            ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+                long zipEntrySize = ze.getSize();
+                final String path = ze.getName().trim();
+                String pathLower = path.toLowerCase(Locale.ROOT);
+                final String fullPath = zipPath + "!/" + path;
 
-                            int pos = getZipStart(bin);
-                            if (pos < 0) {
-                                throw new RuntimeException("Inner-zip - could not find ZIP magic number: " + fullPath);
-                            }
-                            bin = new ByteArrayInputStream(bytes);
-                            // Advance to beginning of zip...
-                            for (int i = 0; i < pos; i++) {
-                                int c = bin.read();
-                                if (c < 0) {
-                                    throw new RuntimeException("Inner-zip closed early i=" + i + " - should be impossible");
+                int fileType = fileType(path);
+                boolean isSubZip = fileType == 0;
+                boolean isClassEntry = fileType == 1;
+                boolean needClassBytes = false;
+
+                if (isClassEntry && pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
+                    needClassBytes = true;
+                } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
+                    needClassBytes = true;
+                }
+
+                if (debug) {
+                    System.err.println("-- DEBUG - " + fullPath + " size=" + zipEntrySize + " isZip=" + isSubZip + " isClass=" + isClassEntry);
+                }
+                byte[] b = new byte[0];
+                if (isSubZip || needClassBytes) {
+                    try {
+                        b = Bytes.streamToBytes(zin, false, zipEntrySize + 1);
+                    } catch (Exception e) {
+                        System.err.println("-- Problem - could not extract " + fullPath + " (size=" + zipEntrySize + ") - " + e);
+                        if (verbose) {
+                            e.printStackTrace(System.err);
+                        }
+                        continue;
+                    }
+                }
+                final byte[] bytes = b;
+
+                if (isSubZip) {
+                    try {
+                        Zipper recursiveZipper = new Zipper() {
+
+                            private ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+
+                            public ZipInputStream getFreshZipStream() {
+                                int pos = getZipStart(bin);
+                                if (pos < 0) {
+                                    throw new RuntimeException("Inner-zip - could not find ZIP magic number: " + fullPath);
                                 }
+                                bin = new ByteArrayInputStream(bytes);
+
+                                // Advance to beginning of zip...
+                                for (int i = 0; i < pos; i++) {
+                                    int c = bin.read();
+                                    if (c < 0) {
+                                        throw new RuntimeException("Inner-zip closed early i=" + i + " - should be impossible");
+                                    }
+                                }
+                                return new ZipInputStream(bin);
                             }
-                            return new ZipInputStream(bin);
-                        }
 
-                        public void close() {
-                        }
-                    };
-
-                    findLog4jRecursive(fullPath, recursiveZipper);
-                } catch (Exception e) {
-                    System.out.println(fullPath + " FAILED: " + e);
-                    e.printStackTrace(System.out);
-                }
-
-
-            } else {
-                if (pathLower.endsWith(FILE_OLD_LOG4J)) {
-                    isLog4J1_X = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_1)) {
-                    log4jProbe[0] = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_2)) {
-                    log4jProbe[1] = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_3)) {
-                    log4jProbe[2] = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_4)) {
-                    log4jProbe[3] = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_5)) {
-                    log4jProbe[4] = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_2_10)) {
-                    isLog4j2_10 = true;
-                } else if (pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
-                    hasJndiLookup = true;
-                    if (containsMatch(bytes, IS_LOG4J_NOT_SAFE_2_12_2)) {
-                        isLog4j2_12_2_override = true;
-                    } else {
-                        isLog4j2_12_2 = true;
-                    }
-                } else if (pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
-                    hasJndiManager = true;
-                    if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
-                        isLog4j2_15 = true;
-                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
-                            isLog4j2_16 = true;
-                        } else {
-                            foundHits = true;
-                        }
-                    } else {
-                        isLog4j2_15_override = true;
-                    }
-                }
-            }
-        }
-
-        if (conditionsChecked) {
-            boolean isLog4j = false;
-            boolean isLog4j_2_10_0 = false;
-            boolean isLog4j_2_12_2 = false;
-            boolean isVulnerable = false;
-            boolean isSafe = false;
-            if (log4jProbe[0] && log4jProbe[1] && log4jProbe[2] && log4jProbe[3] && log4jProbe[4]) {
-                isLog4j = true;
-                if (hasJndiLookup) {
-                    isVulnerable = true;
-                    if (isLog4j2_10) {
-                        isLog4j_2_10_0 = true;
-                        if (hasJndiManager) {
-                            if ((isLog4j2_15 && !isLog4j2_15_override) || (isLog4j2_12_2 && !isLog4j2_12_2_override)) {
-                                isSafe = true;
-                                isLog4j_2_12_2 = (isLog4j2_12_2 && !isLog4j2_12_2_override);
+                            public void close() {
                             }
-                        }
-                    }
-                }
-            }
+                        };
 
-            StringBuilder buf = new StringBuilder();
-            if (isLog4j) {
-                if (isLog4J1_X) {
-                    buf.append(zipPath).append(" contains Log4J-1.x AND Log4J-2.x _CRAZY_   ");
-                    foundLog4j1 = true;
+                        findLog4jRecursive(fullPath, recursiveZipper);
+                    } catch (Exception e) {
+                        System.out.println(fullPath + " FAILED: " + e);
+                        e.printStackTrace(System.out);
+                    }
+
+
                 } else {
-                    buf.append(zipPath).append(" contains Log4J-2.x   ");
-                }
-                if (isVulnerable) {
-                    if (isLog4j_2_10_0) {
-                        if (isSafe) {
-                            if (isLog4j_2_12_2) {
-                                buf.append(">= 2.12.2 _SAFE_ :-)");
+                    if (pathLower.endsWith(FILE_OLD_LOG4J)) {
+                        isLog4J1_X = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_1)) {
+                        log4jProbe[0] = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_2)) {
+                        log4jProbe[1] = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_3)) {
+                        log4jProbe[2] = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_4)) {
+                        log4jProbe[3] = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_5)) {
+                        log4jProbe[4] = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_2_10)) {
+                        isLog4j2_10 = true;
+                    } else if (pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
+                        hasJndiLookup = true;
+                        if (containsMatch(bytes, IS_LOG4J_NOT_SAFE_2_12_2)) {
+                            isLog4j2_12_2_override = true;
+                        } else {
+                            isLog4j2_12_2 = true;
+                        }
+                    } else if (pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
+                        hasJndiManager = true;
+                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
+                            isLog4j2_15 = true;
+                            if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
+                                isLog4j2_16 = true;
                             } else {
-                                if (isLog4j2_16) {
-                                    buf.append(">= 2.16.0 _SAFE_ :-)");
-                                } else {
-                                    buf.append(">= 2.15.0 _OKAY_ :-|");
-                                }
+                                foundHits = true;
                             }
                         } else {
-                            buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                            isLog4j2_15_override = true;
+                        }
+                    }
+                }
+            }
+
+            if (conditionsChecked) {
+                boolean isLog4j = false;
+                boolean isLog4j_2_10_0 = false;
+                boolean isLog4j_2_12_2 = false;
+                boolean isVulnerable = false;
+                boolean isSafe = false;
+                if (log4jProbe[0] && log4jProbe[1] && log4jProbe[2] && log4jProbe[3] && log4jProbe[4]) {
+                    isLog4j = true;
+                    if (hasJndiLookup) {
+                        isVulnerable = true;
+                        if (isLog4j2_10) {
+                            isLog4j_2_10_0 = true;
+                            if (hasJndiManager) {
+                                if ((isLog4j2_15 && !isLog4j2_15_override) || (isLog4j2_12_2 && !isLog4j2_12_2_override)) {
+                                    isSafe = true;
+                                    isLog4j_2_12_2 = (isLog4j2_12_2 && !isLog4j2_12_2_override);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                StringBuilder buf = new StringBuilder();
+                if (isLog4j) {
+                    if (isLog4J1_X) {
+                        buf.append(zipPath).append(" contains Log4J-1.x AND Log4J-2.x _CRAZY_   ");
+                        foundLog4j1 = true;
+                    } else {
+                        buf.append(zipPath).append(" contains Log4J-2.x   ");
+                    }
+                    if (isVulnerable) {
+                        if (isLog4j_2_10_0) {
+                            if (isSafe) {
+                                if (isLog4j_2_12_2) {
+                                    buf.append(">= 2.12.2 _SAFE_ :-)");
+                                } else {
+                                    if (isLog4j2_16) {
+                                        buf.append(">= 2.16.0 _SAFE_ :-)");
+                                    } else {
+                                        buf.append(">= 2.15.0 _OKAY_ :-|");
+                                    }
+                                }
+                            } else {
+                                buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                            }
+                        } else {
+                            buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
                         }
                     } else {
-                        buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
+                        buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");
                     }
-                } else {
-                    buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");
+                    if (!isSafe) {
+                        foundHits = true;
+                    }
+                    System.out.println(buf);
+                } else if (isLog4J1_X) {
+                    buf.append(zipPath).append(" contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
+                    foundLog4j1 = true;
+                    System.out.println(buf);
                 }
-                if (!isSafe) {
-                    foundHits = true;
-                }
-                System.out.println(buf);
-            } else if (isLog4J1_X) {
-                buf.append(zipPath).append(" contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
-                foundLog4j1 = true;
-                System.out.println(buf);
             }
-        }
+
 
         /*
         if (!isZip) {
@@ -428,6 +425,11 @@ public class Log4JDetector {
             }
         }
          */
+        } finally {
+            if (zipper != null) {
+                zipper.close();
+            }
+        }
     }
 
     private static boolean containsMatch(byte[] bytes, byte[] needle) {
@@ -545,9 +547,11 @@ public class Log4JDetector {
             if (verbose) {
                 System.err.println("f.getCanonicalFile() failed: " + f.getPath() + " - " + e);
             }
+            f = f.getAbsoluteFile();
         }
 
-        // Hopefully this catches symlink cycles...
+        // Hopefully this stops symlink cycles.
+        // Using CRC-64 of path to save on memory (since we're storing *EVERY* path we come across).
         String path = f.getPath();
         long crc = CRC64.hash(path);
         if (visited.contains(crc)) {
@@ -556,11 +560,12 @@ public class Log4JDetector {
             visited.add(crc);
         }
 
-        if (!f.canRead()) {
-            System.out.println("-- Problem: cannot read - " + f.getPath());
-            return;
-        }
         if (f.isDirectory()) {
+            if (!f.canRead()) {
+                System.err.println("-- Problem: no permission to read directory - " + f.getPath());
+                return;
+            }
+
             File[] fileList = f.listFiles();
             if (fileList != null) {
                 Arrays.sort(fileList, FILES_ORDER_BY_NAME);
@@ -572,6 +577,10 @@ public class Log4JDetector {
             if (f.isFile() || f.isHidden()) {
                 int fileType = fileType(f.getName());
                 if (0 == fileType) {
+                    if (!f.canRead()) {
+                        System.err.println("-- Problem: no permission to read contents of zip file - " + f.getPath());
+                        return;
+                    }
                     scan(f);
                 } else if (1 == fileType) {
                     boolean maybe = f.getPath().toLowerCase(Locale.ROOT).endsWith(FILE_LOG4J_1);
@@ -593,21 +602,29 @@ public class Log4JDetector {
 
                                                 // Check for 2.12.2...
                                                 File jndiLookup = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_LOOKUP);
-                                                byte[] bytes = Bytes.fileToBytes(jndiLookup);
-                                                if (!containsMatch(bytes, IS_LOG4J_NOT_SAFE_2_12_2)) {
-                                                    isLog4J_2_12_2 = true;
+                                                if (jndiLookup.canRead()) {
+                                                    byte[] bytes = Bytes.fileToBytes(jndiLookup);
+                                                    if (!containsMatch(bytes, IS_LOG4J_NOT_SAFE_2_12_2)) {
+                                                        isLog4J_2_12_2 = true;
+                                                    }
+                                                } else {
+                                                    System.err.println("-- Problem: no permission to read file - " + jndiLookup.getPath() + " (required to determine if 2.12.2, will assume not)");
                                                 }
 
                                                 if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER)) {
                                                     File jndiManager = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER);
-                                                    bytes = Bytes.fileToBytes(jndiManager);
-                                                    if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
-                                                        isLog4J_2_15 = true;
-                                                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
-                                                            isLog4J_2_16 = true;
-                                                        } else {
-                                                            foundHits = true;
+                                                    if (jndiManager.canRead()) {
+                                                        byte[] bytes = Bytes.fileToBytes(jndiManager);
+                                                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
+                                                            isLog4J_2_15 = true;
+                                                            if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
+                                                                isLog4J_2_16 = true;
+                                                            } else {
+                                                                foundHits = true;
+                                                            }
                                                         }
+                                                    } else {
+                                                        System.err.println("-- Problem: no permission to read file - " + jndiManager.getPath() + " (required to determine if 2.16.0, will assume not)");
                                                     }
                                                 }
                                             }
@@ -631,10 +648,12 @@ public class Log4JDetector {
                                         buf.append(">= 2.12.2 _SAFE_ :-)");
                                     } else {
                                         buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                                        foundHits = true;
                                     }
                                 }
                             } else {
                                 buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
+                                foundHits = true;
                             }
                         } else {
                             buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");

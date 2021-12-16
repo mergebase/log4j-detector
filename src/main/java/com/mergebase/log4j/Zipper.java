@@ -1,5 +1,6 @@
 package com.mergebase.log4j;
 
+import java.io.IOException;
 import java.util.zip.ZipInputStream;
 
 
