@@ -18,7 +18,7 @@ import java.util.zip.ZipInputStream;
 
 public class Log4JDetector {
 
-    private static final String FILE_OLD_LOG4J = "log4j/FileAppender.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_3 = "core/Filter.class".toLowerCase(Locale.ROOT);
@@ -583,7 +583,17 @@ public class Log4JDetector {
                     }
                     scan(f);
                 } else if (1 == fileType) {
-                    boolean maybe = f.getPath().toLowerCase(Locale.ROOT).endsWith(FILE_LOG4J_1);
+                    String currentPathLower = f.getPath().toLowerCase(Locale.ROOT);
+                    boolean isLog4J_1_X = currentPathLower.endsWith(FILE_OLD_LOG4J);
+                    boolean maybe = false;
+                    if (isLog4J_1_X) {
+                        StringBuilder buf = new StringBuilder();
+                        String grandParent = f.getParentFile().getParent();
+                        buf.append(grandParent).append(" contains contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
+                        System.out.println(buf);
+                    } else {
+                        maybe = currentPathLower.endsWith(FILE_LOG4J_1);
+                    }
                     if (maybe) {
                         boolean isVulnerable = false;
                         boolean isLog4J_2_10 = false;
