@@ -9,6 +9,8 @@ Can correctly detect log4j inside executable spring-boot jars/wars, dependencies
 into [uber jars](https://mergebase.com/blog/software-composition-analysis-sca-vs-java-uber-jars/), shaded jars, and even
 exploded jar files just sitting uncompressed on the file-system (aka *.class).
 
+We currently maintain a collection of [log4j-samples](https://github.com/mergebase/log4j-samples) we use for testing.
+
 # Example Usage:
 
 java -jar log4j-detector-2021.12.16.jar [path-to-scan] > hits.txt
