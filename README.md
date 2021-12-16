@@ -18,20 +18,45 @@ java -jar log4j-detector-2021.12.15.jar [path-to-scan] > hits.txt
 # More Example Usage:
 
 ```
-java -jar log4j-detector-2021.12.15.jar /var/tmp/l 
+java -jar log4j-detector-2021.12.15.jar ./samples 
 
-/var/tmp/l/log4j-core-2.10.0.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
-/var/tmp/l/log4j-core-2.12.2.jar contains Log4J-2.x   >= 2.12.2 _SAFE_ :-)
-/var/tmp/l/log4j-core-2.14.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
-/var/tmp/l/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _OKAY_ :-|
-/var/tmp/l/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.16.0 _SAFE_ :-)
+-- github.com/mergebase/log4j-detector v2021.12.15 (by mergebase.com) analyzing paths (could take a while).
+-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.
+/opt/mergebase/log4j-detector/samples/clt-1.0-SNAPSHOT.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/infinispan-embedded-query-8.2.12.Final.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-1.1.3.jar contains Log4J-1.x   <= 1.2.17 _OLD_ :-|
+/opt/mergebase/log4j-detector/samples/log4j-1.2.13.jar contains Log4J-1.x   <= 1.2.17 _OLD_ :-|
+/opt/mergebase/log4j-detector/samples/log4j-1.2.17.jar contains Log4J-1.x   <= 1.2.17 _OLD_ :-|
+/opt/mergebase/log4j-detector/samples/log4j-core-2.0-beta2.jar contains Log4J-2.x   <= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) 
+/opt/mergebase/log4j-detector/samples/log4j-core-2.0-beta9.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.0.2.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.0.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.10.0.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.12.2.jar contains Log4J-2.x   >= 2.12.2 _SAFE_ :-)
+/opt/mergebase/log4j-detector/samples/log4j-core-2.14.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _OKAY_ :-|
+/opt/mergebase/log4j-detector/samples/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.16.0 _SAFE_ :-)
+/opt/mergebase/log4j-detector/samples/log4j-core-2.4.1.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
+/opt/mergebase/log4j-detector/samples/log4j-core-2.9.1.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
 ```
 
-# Why Report About 2.10.0, 2.15.0, and 2.16.0 ?
+# Understanding The Results
 
-We consider version 2.10.0 important because that's the first version where message lookups can be disabled via config.
+_VULNERABLE_ -> You need to upgrade or remove this file.
 
-We consider version 2.15.0 important because that's the first version where default config is not vulnerable to CVE-2021-44228.
+_OKAY_ -> We only report this for Log4J version 2.15.0. We recommend upgrading to 2.16.0.
+
+_SAFE_ -> We currently only report this for Log4J versions 2.16.0 and 2.12.2.
+
+_OLD_ -> You are safe from CVE-2021-44228, but should plan to upgrade because Log4J 1.2.x has been EOL for 10 years and has several known-vulnerabilities.
+
+_POTENTIALLY_SAFE_ -> The "JndiLookup.class" file is not present, either because your version of Log4J is very old (pre 2.0-beta9), or because someone already removed this file. Make sure it was someone in your team or company that removed "JndiLookup.class" if that's the case, because attackers have been known to remove this file themselves to prevent additional competing attackers from gaining access to compromised systems.
+
+# Why Report About 2.10.0, 2.15.0, and 2.16.0 ?  What About log4j-api-2.x.jar?
+
+We consider version 2.10.0 important because that's the first version where Log4J's vulnerable "message lookup feature" can be disabled via Log4J configuration.
+
+We consider version 2.15.0 important because that's the first version where Log4J's default out-of-the-box configuration is not vulnerable to CVE-2021-44228.
 
 And version 2.16.0 is important because it's not vulnerable to CVE-2021-45046. Despite CVE-2021-45046 being much less serious,
 we anticipate everyone will want to patch to 2.16.0.
