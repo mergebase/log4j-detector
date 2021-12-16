@@ -89,6 +89,7 @@ java -jar log4j-detector-2021.12.15.jar
 Usage: java -jar log4j-detector-2021.12.15.jar [--verbose] [paths to scan...]
 
 Exit codes:  0 = No vulnerable Log4J versions found.
+             1 = At least one legacy Log4J 1.x version found.
              2 = At least one vulnerable Log4J version found.
 
 About - MergeBase log4j detector (version 2021.12.15)
