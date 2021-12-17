@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -47,6 +49,7 @@ public class Log4JDetector {
 
     private static boolean verbose = false;
     private static boolean debug = false;
+    private static boolean stdin = false;
     private static boolean foundHits = false;
     private static boolean foundLog4j1 = false;
 
@@ -65,6 +68,9 @@ public class Log4JDetector {
             } else if ("--verbose".equals(argOrig)) {
                 verbose = true;
                 it.remove();
+            } else if ("--stdin".equals(argOrig)) {
+                stdin = true;
+                it.remove();
             } else {
                 File f = new File(argOrig);
                 if (!f.exists()) {
@@ -74,9 +80,9 @@ public class Log4JDetector {
             }
         }
 
-        if (argsList.isEmpty()) {
+        if (argsList.isEmpty() && !stdin) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.16.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.16.jar [--verbose] [--stdin] [paths to scan...]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
@@ -91,6 +97,19 @@ public class Log4JDetector {
 
         System.out.println("-- github.com/mergebase/log4j-detector v2021.12.16 (by mergebase.com) analyzing paths (could take a while).");
         System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
+        if (stdin) {
+            System.out.println("-- Note: you specified '--stdin' flag to read files to examine from STDIN.");
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                while (reader.ready()) {
+                    File dir = new File(reader.readLine());
+                    analyze(dir);
+                }
+            }
+            catch (IOException e) {
+                System.out.println(e);
+            }
+        }
         for (String arg : argsList) {
             File dir = new File(arg);
             analyze(dir);
