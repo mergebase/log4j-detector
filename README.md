@@ -20,7 +20,7 @@ Detects Log4J versions on your file-system within any application that are vulne
   - [What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? ](#itemwar)
   - [What About Log4J 1.2.x ?](#item1.2.x)
   - [How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?](#itemtrojan)
-  - [What Is MergeBase All About?](#item)
+  - [What Is [MergeBase](https://mergebase.com/) All About?](#item)
 
 
 
@@ -124,7 +124,7 @@ vulnerable.
 
 Many scanners (including GitHub's own [Dependabot](https://github.com/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
 
-At MergeBase we pride ourselves on our scan accuracy. You're already busy enough patching and defending your systems. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
+At [MergeBase](https://mergebase.com/) we pride ourselves on our scan accuracy. You're already busy enough patching and defending your systems. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
 
 
 ## Why Report About 2.10.0, 2.15.0, and 2.16.0 ? <a name="item2.10.0"></a>
