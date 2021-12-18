@@ -20,7 +20,7 @@ Detects Log4J versions on your file-system within any application that are vulne
   - [What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? ](#itemwar)
   - [What About Log4J 1.2.x ?](#item1.2.x)
   - [How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?](#itemtrojan)
-  - [What Is [MergeBase](https://mergebase.com/) All About?](#item)
+  - [What Is MergeBase All About?](#item)
 
 
 
