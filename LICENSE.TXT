@@ -2,10 +2,17 @@
 log4j-detector is copyright (c) 2021 - MergeBase Software Inc.
 https://mergebase.com/
 
-log4j-detector is licensed to the public under the terms of the GPLv3.
+log4j-detector (as a whole) is licensed to the public under the terms of the GPLv3.
 
-In particular, this refers to the Java source-code in the "com/mergebase/log4j/"
-directory, as well as Java bytecode in the "com.mergebase.log4j" namespace. 
+com.mergebase.log4j.Java2Json (src/main/java/com/mergebase/log4j/Java2Json.java)
+is licensed to the public under the terms of the Apache 2.0 license.
+
+For the text of the Apache 2.0 license see: https://www.apache.org/licenses/LICENSE-2.0
+
+Aside from Java2Json.java, all other Java source-code in this project (within
+the "com/mergebase/log4j/" directory), as well as Java bytecode in the
+"com.mergebase.log4j" namespace, is licensed to the public under the terms
+of the GPLv3.
 
 See below for the text of the GPLv3 license.
 
