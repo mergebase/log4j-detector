@@ -1,7 +1,11 @@
 <div style="text-align: right"><img src='mergebase-small.png'></div>
 
+# Log4-detector
+
+Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/)  and [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
+
 # Table of Contents
-- [log4j-detector](#itemdetector)
+- [Introduction](#itemdetector)
 - [Example Usage](#itemexample)
 - [More Example Usage](#itemmore)
 - [Understanding The Results](#itemresults)
@@ -19,9 +23,7 @@
 
 
 
-# log4j-detector <a name="itemdetector"></a>
-
-Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/)  and [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
+# Introduction <a name="itemdetector"></a>
 
 Currently reports `log4j-core` versions 2.12.2 and 2.16.0 as **\_SAFE\_**, 2.15.0 as **\_OKAY\_** and all other versions as **\_VULNERABLE\_**
 (although it does report pre-2.0-beta9 as "**\_POTENTIALLY_SAFE\_**").
