@@ -105,8 +105,8 @@ public class Log4JDetector {
             while (scanner.hasNextLine()) {
                 File dir = new File(scanner.nextLine());
                 analyze(dir);
-				stdin_count++;
-			}
+                stdin_count++;
+            }
         }
         for (String arg : argsList) {
             File dir = new File(arg);
