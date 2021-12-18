@@ -13,11 +13,11 @@ Detects Log4J versions on your file-system within any application that are vulne
 - [Build From Source ](#itembuild)
 - [Testing](#itemtesting)
 - [License](#itemlicense)
-- Frequently Asked Questions:
+- [Frequently Asked Questions](#faq)
+  - [How Does It Work?](#itemwork)
   - [This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`? ](#itemapi)
   - [Why Report About 2.10.0, 2.15.0, and 2.16.0 ? ](#item2.10.0)
   - [What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? ](#itemwar)
-  - [How Does It Work?](#itemwork)
   - [What About Log4J 1.2.x ?](#item1.2.x)
   - [How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?](#itemtrojan)
   - [What Is MergeBase All About?](#item)
@@ -78,36 +78,6 @@ java -jar log4j-detector-2021.12.16.jar ./samples
 
 **\_POTENTIALLY_SAFE\_** -> The "JndiLookup.class" file is not present, either because your version of Log4J is very old (pre 2.0-beta9), or because someone already removed this file. Make sure it was someone in your team or company that removed "JndiLookup.class" if that's the case, because attackers have been known to remove this file themselves to prevent additional competing attackers from gaining access to compromised systems.
 
-# This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`? <a name="itemapi"></a>
-
-Many scanners (including GitHub's own [Dependabot](https://github.com/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
-
-At MergeBase we pride ourselves on our scan accuracy. You're already busy enough patching and defending your systems. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
-
-
-# Why Report About 2.10.0, 2.15.0, and 2.16.0 ? <a name="item2.10.0"></a>
-
-We consider version 2.10.0 important because that's the first version where Log4J's vulnerable "message lookup feature" can be disabled via Log4J configuration.
-
-We consider version 2.15.0 important because that's the first version where Log4J's default out-of-the-box configuration is not vulnerable to CVE-2021-44228.
-
-And version 2.16.0 is important because it's not vulnerable to CVE-2021-45046. Despite CVE-2021-45046 being much less serious,
-we anticipate everyone will want to patch to 2.16.0.
-
-# What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? <a name="itemwar"></a>
-
-The "!" means the log4j-detector entered a zip archive (e.g., *.zip, *.ear, *.war, *.aar, *.jar). Since zip files can
-contain zip files, a single result might contain more than one "!" indicator in its result.
-
-Note:  the log4j-detector only recursively enters zip archives. It does not enter tar or gz or bz2, etc. The main reason
-being that Java systems are often configured to execute jars inside jars, but they are never configured to execute other
-file formats (that I know of!). And so a log4j copy inside a *.tar.gz is probably not reachable for a running Java
-system, and hence, not a vulnerability worth reporting.
-
-2nd note:  for zips-inside-zips our scanner does load the inner-zip completely into memory (using ByteArrayInputStream)
-before attempting to scan it. You might need to give Java some extra memory if you have extremely large inner-zips on
-your system (e.g., 1 GB or larger).
-
 # Usage <a name="itemusage"></a>
 
 ```
@@ -147,6 +117,38 @@ named "JndiManager.class"
 on your file-system, it then examines that file for this String: "Invalid JNDI URI - {}". Turns out that specific String
 literal is only present in the patched version of Log4J (version 2.15.0). Any versions of Log4J without that String are
 vulnerable.
+
+# Frequently Asked Questions <a name="faq"></a>
+
+## This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`? <a name="itemapi"></a>
+
+Many scanners (including GitHub's own [Dependabot](https://github.com/dependabot)) currently report both "`log4j-core`" and "`log4j-api`" libraries as vulnerable.  These scanners are incorrect. There is currently no existing version of the "`log4j-api`" library that can be exploited by any of these vulnerabilities.
+
+At MergeBase we pride ourselves on our scan accuracy. You're already busy enough patching and defending your systems. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
+
+
+## Why Report About 2.10.0, 2.15.0, and 2.16.0 ? <a name="item2.10.0"></a>
+
+We consider version 2.10.0 important because that's the first version where Log4J's vulnerable "message lookup feature" can be disabled via Log4J configuration.
+
+We consider version 2.15.0 important because that's the first version where Log4J's default out-of-the-box configuration is not vulnerable to CVE-2021-44228.
+
+And version 2.16.0 is important because it's not vulnerable to CVE-2021-45046. Despite CVE-2021-45046 being much less serious,
+we anticipate everyone will want to patch to 2.16.0.
+
+## What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? <a name="itemwar"></a>
+
+The "!" means the log4j-detector entered a zip archive (e.g., *.zip, *.ear, *.war, *.aar, *.jar). Since zip files can
+contain zip files, a single result might contain more than one "!" indicator in its result.
+
+Note:  the log4j-detector only recursively enters zip archives. It does not enter tar or gz or bz2, etc. The main reason
+being that Java systems are often configured to execute jars inside jars, but they are never configured to execute other
+file formats (that I know of!). And so a log4j copy inside a *.tar.gz is probably not reachable for a running Java
+system, and hence, not a vulnerability worth reporting.
+
+2nd note:  for zips-inside-zips our scanner does load the inner-zip completely into memory (using ByteArrayInputStream)
+before attempting to scan it. You might need to give Java some extra memory if you have extremely large inner-zips on
+your system (e.g., 1 GB or larger).
 
 # What About Log4J 1.2.x ? <a name="item1.2.x"></a>
 
