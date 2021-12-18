@@ -1,3 +1,9 @@
+
+## v2021.12.17
+
+- Ability to detect log4j-core-2.17.0.jar 
+
+
 ## v2021.12.16
 
 - Properly detect exploded Log4J versions (that are not inside *.jar and instead are just sitting as *.class directly on disk).

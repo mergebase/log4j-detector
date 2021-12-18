@@ -78,20 +78,20 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.16.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.17.jar [--verbose] [paths to scan...]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.16)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.17)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.16 (by mergebase.com) analyzing paths (could take a while).");
+        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.17 (by mergebase.com) analyzing paths (could take a while).");
         System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         for (String arg : argsList) {
             File dir = new File(arg);
