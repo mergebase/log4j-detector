@@ -20,7 +20,7 @@ Detects Log4J versions on your file-system within any application that are vulne
   - [What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? ](#itemwar)
   - [What About Log4J 1.2.x ?](#item1.2.x)
   - [How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector?](#itemtrojan)
-  - [What Is MergeBase All About?](#item)
+- [What Is MergeBase All About?](#item)
 
 
 
@@ -150,11 +150,11 @@ system, and hence, not a vulnerability worth reporting.
 before attempting to scan it. You might need to give Java some extra memory if you have extremely large inner-zips on
 your system (e.g., 1 GB or larger).
 
-# What About Log4J 1.2.x ? <a name="item1.2.x"></a>
+## What About Log4J 1.2.x ? <a name="item1.2.x"></a>
 
 Only versions of Log4J 2.x (from 2.0-beta9 to 2.14.1) are vulnerable to CVE-2021-44228.
 
-# How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector? <a name="itemtrojan"></a>
+## How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector? <a name="itemtrojan"></a>
 
 Great question! Since we include the complete source code here in Github (all 750 lines of Java), as well as the steps
 to build it, and since this tool has zero dependencies, it shouldn't take too long to carefully study the code to your
