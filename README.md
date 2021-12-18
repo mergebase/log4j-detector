@@ -15,7 +15,8 @@
 - How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector? (#itemtrojan)
 - What Is MergeBase All About? (#item)
 
-<img src="mergebase-small.png">](http://mergebase.com)
+[![mergebase.com](mergebase-small.jpg)](https://mergebase.com)
+
 
 # log4j-detector <a name="itemdetector"></a>
 
