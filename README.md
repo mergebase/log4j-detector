@@ -110,6 +110,8 @@ We maintain a collection of log4j samples here:  https://github.com/mergebase/lo
 
 GPL version 3.0
 
+# Frequently Asked Questions <a name="faq"></a>
+
 # How Does It Work? <a name="itemwork"></a>
 
 The Java compiler stores String literals directly in the compiled *.class files. If log4j-detector detects a file
@@ -117,8 +119,6 @@ named "JndiManager.class"
 on your file-system, it then examines that file for this String: "Invalid JNDI URI - {}". Turns out that specific String
 literal is only present in the patched version of Log4J (version 2.15.0). Any versions of Log4J without that String are
 vulnerable.
-
-# Frequently Asked Questions <a name="faq"></a>
 
 ## This Scanner Only Reports Hits Against The `log4j-core` Library. What About `log4j-api`? <a name="itemapi"></a>
 
