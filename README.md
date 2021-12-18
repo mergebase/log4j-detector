@@ -1,5 +1,5 @@
 # Table of Contents
-- log4j-detector (#itemdetector)
+- [log4j-detector](#itemdetector)
 - Example Usage: (#itemexample)
 - More Example Usage: (#itemmore)
 - Understanding The Results (#itemresults)
@@ -15,7 +15,7 @@
 - How Can I Be Sure This Isn't A Trojan Pretending To Be A Log4J Detector? (#itemtrojan)
 - What Is MergeBase All About? (#item)
 
-[![mergebase.com](mergebase-small.jpg)](https://mergebase.com)
+[![mergebase.com](mergebase-small.png)](https://mergebase.com)
 
 
 # log4j-detector <a name="itemdetector"></a>
