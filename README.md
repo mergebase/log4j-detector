@@ -163,7 +163,7 @@ type "javac \*.java". That works, too!
 
 # What Is MergeBase All About? <a name="itemmergebase"></a>
 
-![MergeBase](mergebase.png)
+![MergeBase](mergebase-small.png)
 [MergeBase](https://mergebase.com/) is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're
 similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable
 open-source libraries in their software. Check us out! We have great accuracy, great language support, and we're not too
