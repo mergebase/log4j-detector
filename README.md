@@ -1,5 +1,4 @@
-<div style="text-align: right">[![mergebase.com](mergebase-small.png)](https://mergebase.com)
-</div>
+<div style="text-align: right"><img src='mergebase-small.png'></div>
 
 # Table of Contents
 - [log4j-detector](#itemdetector)
