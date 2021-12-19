@@ -1,3 +1,16 @@
+/*
+ * This file is licensed to the public under the terms of the GNU Public License 3.0
+ * (aka GPLv3).
+ *
+ * To be clear, for the purposes of copyright law, any program ["The Importing Program"] that
+ * imports this file (via Java's "import" mechanism or via Java reflection or via any
+ * other software technique for importing or referencing functionality) is considered
+ * a derivative work of this work, and must also comply with the conditions of the GPLv3
+ * license in The Importing Program's totality to be granted a copyright license to this work,
+ * and must also use the same definition as defined here for what constitutes a derivative work
+ * of itself.
+ *
+ */
 package com.mergebase.log4j;
 
 import java.io.BufferedInputStream;
@@ -15,11 +28,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.Properties;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static com.mergebase.log4j.VersionComparator.compare;
+
 public class Log4JDetector {
 
+    private static final String POM_PROPERTIES = "log4j-core/pom.properties".toLowerCase(Locale.ROOT);
     private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
@@ -161,13 +178,20 @@ public class Log4JDetector {
 
     /**
      * @param fileName name to examine for type
-     * @return 0 == zip, 1 == class, -1 = who knows...
+     * @return 0 == zip, 1 == class, 2 = log4j-core/pom.properties, -1 = who knows...
      */
     private static int fileType(String fileName) {
         int c = fileName.lastIndexOf('.');
         if (c >= 0) {
             String suffix = fileName.substring(c + 1);
-            if ("class".equalsIgnoreCase(suffix)) {
+
+            // Special logic for "log4j-core/pom.properties" last-resort version source.
+            if ("properties".equalsIgnoreCase(suffix)) {
+                String lower = fileName.toLowerCase(Locale.ROOT);
+                if (lower.endsWith(POM_PROPERTIES)) {
+                    return 2;
+                }
+            } else if ("class".equalsIgnoreCase(suffix)) {
                 return 1;
             } else if ("zip".equalsIgnoreCase(suffix)
                     || "jar".equalsIgnoreCase(suffix)
@@ -221,6 +245,8 @@ public class Log4JDetector {
             boolean isLog4j2_15_override = false;
             boolean isLog4j2_12_2 = false;
             boolean isLog4j2_12_2_override = false;
+            byte[] pomProperties = null;
+            String pomPath = null;
             ZipEntry ze;
             while (true) {
                 try {
@@ -248,9 +274,12 @@ public class Log4JDetector {
                 int fileType = fileType(path);
                 boolean isSubZip = fileType == 0;
                 boolean isClassEntry = fileType == 1;
+                boolean isPomProperties = fileType == 2;
                 boolean needClassBytes = false;
 
-                if (isClassEntry && pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
+                if (isPomProperties) {
+                    needClassBytes = true;
+                } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
                     needClassBytes = true;
                 } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
                     needClassBytes = true;
@@ -303,12 +332,15 @@ public class Log4JDetector {
                         findLog4jRecursive(fullPath, recursiveZipper);
                     } catch (Exception e) {
                         System.err.println(fullPath + " FAILED: " + e);
-                        e.printStackTrace(System.out);
+                        e.printStackTrace(System.err);
                     }
 
 
                 } else {
-                    if (pathLower.endsWith(FILE_OLD_LOG4J)) {
+                    if (pathLower.endsWith(POM_PROPERTIES)) {
+                        pomProperties = bytes;
+                        pomPath = "!/" + path;
+                    } else if (pathLower.endsWith(FILE_OLD_LOG4J)) {
                         isLog4J1_X = true;
                     } else if (pathLower.endsWith(FILE_LOG4J_1)) {
                         log4jProbe[0] = true;
@@ -345,7 +377,42 @@ public class Log4JDetector {
                 }
             }
 
+
             if (conditionsChecked) {
+                if (!log4jProbe[0] || !log4jProbe[1] || !log4jProbe[2] || !log4jProbe[3] || !log4jProbe[4]) {
+                    if (pomProperties != null) {
+                        System.err.println("-- Warning: " + zipPath + " does not contain Log4J bytecode, but claims it does (" + pomPath + ")");
+                        ByteArrayInputStream byteIn = new ByteArrayInputStream(pomProperties);
+                        Properties p = new Properties();
+                        try {
+                            p.load(byteIn);
+                            String version = p.getProperty("version");
+                            if (version != null) {
+                                boolean isLog4j2 = compare("2", version) <= 0;
+                                if (isLog4j2) {
+                                    log4jProbe = new boolean[]{true, true, true, true, true};
+                                    hasJndiLookup = compare("2.0-beta9", version) <= 0;
+                                    hasJndiManager = compare("2.1", version) <= 0;
+                                    isLog4j2_10 = compare("2.10.0", version) <= 0;
+                                    isLog4j2_12_2 = version.startsWith("2.12.") && compare("2.12.2", version) <= 0;
+                                    if (isLog4j2_12_2) {
+                                        isLog4j2_12_2_override = false;
+                                    }
+                                    isLog4j2_15 = version.startsWith("2.15.");
+                                    isLog4j2_16 = version.startsWith("2.16.");
+                                    isLog4j2_17 = compare("2.17.0", version) <= 0;
+                                    if (isLog4j2_15 || isLog4j2_16 || isLog4j2_17) {
+                                        isLog4j2_15_override = false;
+                                    }
+                                }
+                            }
+                        } catch (IOException ioe) {
+                            // invalid properties file!?!
+                        }
+                    }
+                }
+
+
                 boolean isLog4j = false;
                 boolean isLog4j_2_10_0 = false;
                 boolean isLog4j_2_12_2 = false;
@@ -475,7 +542,7 @@ public class Log4JDetector {
             findLog4jRecursive(zip, myZipper);
         } catch (Exception e) {
             System.err.println("-- Problem: " + zipFile.getPath() + " FAILED: " + e);
-            e.printStackTrace(System.out);
+            e.printStackTrace(System.err);
         } finally {
             myZipper.close();
         }
