@@ -231,6 +231,7 @@ public class Log4JDetector {
             boolean isLog4j2_12_2 = false;
             boolean isLog4j2_12_2_override = false;
             byte[] pomProperties = null;
+            String pomPath = null;
             ZipEntry ze;
             while (true) {
                 try {
@@ -323,6 +324,7 @@ public class Log4JDetector {
                 } else {
                     if (pathLower.endsWith(POM_PROPERTIES)) {
                         pomProperties = bytes;
+                        pomPath = "!/" + path;
                     } else if (pathLower.endsWith(FILE_OLD_LOG4J)) {
                         isLog4J1_X = true;
                     } else if (pathLower.endsWith(FILE_LOG4J_1)) {
@@ -364,7 +366,7 @@ public class Log4JDetector {
             if (conditionsChecked) {
                 if (!log4jProbe[0] || !log4jProbe[1] || !log4jProbe[2] || !log4jProbe[3] || !log4jProbe[4]) {
                     if (pomProperties != null) {
-                        System.err.println("-- Warning: " + zipPath + " does not contain Log4J bytecode, but claims it does.");
+                        System.err.println("-- Warning: " + zipPath + " does not contain Log4J bytecode, but claims it does (" + pomPath + ")");
                         ByteArrayInputStream byteIn = new ByteArrayInputStream(pomProperties);
                         Properties p = new Properties();
                         try {
