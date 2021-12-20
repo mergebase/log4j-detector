@@ -2,7 +2,7 @@
 
 <h1>Log4-detector</h1>
 
-Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/),   [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/) and [CVE-2021-45105](https://mergebase.com/vulnerability/CVE-2021-45105/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
+Scanner that detects vulnerable Log4J versions ([CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/),   [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/) and [CVE-2021-45105](https://mergebase.com/vulnerability/CVE-2021-45105/), etc) on your file-system within any application. It is able to even find Log4J instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
 # Table of Contents
 - [Introduction](#itemdetector)
