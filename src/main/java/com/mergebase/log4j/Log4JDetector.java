@@ -182,7 +182,9 @@ public class Log4JDetector {
                     || "jar".equalsIgnoreCase(suffix)
                     || "war".equalsIgnoreCase(suffix)
                     || "ear".equalsIgnoreCase(suffix)
-                    || "aar".equalsIgnoreCase(suffix)) {
+                    || "aar".equalsIgnoreCase(suffix)
+                    || "jpi".equalsIgnoreCase(suffix)
+                    || "hpi".equalsIgnoreCase(suffix)) {
                 return 0;
             }
         }
