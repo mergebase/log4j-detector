@@ -25,9 +25,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -68,22 +72,48 @@ public class Log4JDetector {
 
     private static boolean verbose = false;
     private static boolean debug = false;
+    private static boolean json = false;
+    private static Set<String> excludes = new TreeSet<String>();
     private static boolean foundHits = false;
     private static boolean foundLog4j1 = false;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         List<String> argsList = new ArrayList<String>();
         Collections.addAll(argsList, args);
 
         Iterator<String> it = argsList.iterator();
+        List<String> stdinLines = new ArrayList<String>();
         while (it.hasNext()) {
-            final String argOrig = it.next();
+            final String argOrig = it.next().trim();
             if ("--debug".equals(argOrig)) {
                 debug = true;
                 it.remove();
             } else if ("--verbose".equals(argOrig)) {
                 verbose = true;
                 it.remove();
+            } else if ("--json".equals(argOrig)) {
+                json = true;
+                it.remove();
+            } else if (argOrig.startsWith("--exclude=[")) {
+                int x = argOrig.indexOf("]");
+                if (x > 0) {
+                    it.remove();
+                    String json = argOrig.substring("--exclude=".length());
+                    Object o = Java2Json.parse(json);
+                    if (o instanceof List) {
+                        List<Object> list = (List) o;
+                        for (Object obj : list) {
+                            if (obj != null) {
+                                excludes.add(String.valueOf(obj));
+                            }
+                        }
+                    }
+                }
+            } else if ("--stdin".equals(argOrig)) {
+                it.remove();
+                byte[] b = Bytes.streamToBytes(System.in);
+                String s = new String(b, Bytes.UTF_8);
+                stdinLines = Strings.intoLines(s);
             } else {
                 File f = new File(argOrig);
                 if (!f.exists()) {
@@ -92,27 +122,40 @@ public class Log4JDetector {
                 }
             }
         }
+        argsList.addAll(stdinLines);
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.17.jar [--verbose] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.20.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println();
+            System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
+            System.out.println("  --stdin      - Parse STDIN for paths to explore.");
+            System.out.println("  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
+            System.out.println();
+            System.out.println("                 Example: --excludes=[\"/dev\", \"/media\", \"Z:\\TEMP\"]");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.17)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.20)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.out.println("-- github.com/mergebase/log4j-detector v2021.12.17 (by mergebase.com) analyzing paths (could take a while).");
-        System.out.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
+        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.20 (by mergebase.com) analyzing paths (could take a while).");
+        System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
+        if (json) {
+            System.out.println("{\"hits\":[");
+        }
         for (String arg : argsList) {
             File dir = new File(arg);
             analyze(dir);
+        }
+        if (json) {
+            System.out.println("{\"_THE_END_\":true}]}");
         }
         if (foundHits) {
             System.exit(2);
@@ -422,10 +465,10 @@ public class Log4JDetector {
                 StringBuilder buf = new StringBuilder();
                 if (isLog4j) {
                     if (isLog4J1_X) {
-                        buf.append(zipPath).append(" contains Log4J-1.x AND Log4J-2.x _CRAZY_   ");
+                        buf.append(" contains Log4J-1.x AND Log4J-2.x _CRAZY_   ");
                         foundLog4j1 = true;
                     } else {
-                        buf.append(zipPath).append(" contains Log4J-2.x   ");
+                        buf.append(" contains Log4J-2.x   ");
                     }
                     if (isVulnerable) {
                         if (isLog4j_2_10_0) {
@@ -455,17 +498,35 @@ public class Log4JDetector {
                     if (!isSafe) {
                         foundHits = true;
                     }
-                    System.out.println(buf);
+                    System.out.println(prepareOutput(zipPath, buf));
                 } else if (isLog4J1_X) {
-                    buf.append(zipPath).append(" contains Log4J-1.x   <= 1.2.17 _OLD_");
+                    buf.append(" contains Log4J-1.x   <= 1.2.17 _OLD_");
                     foundLog4j1 = true;
-                    System.out.println(buf);
+                    System.out.println(prepareOutput(zipPath, buf));
                 }
             }
         } finally {
             if (zipper != null) {
                 zipper.close();
             }
+        }
+    }
+
+    private static String prepareOutput(String zipPath, StringBuilder buf) {
+        if (json) {
+            String msg = buf.toString().trim();
+            int x = msg.lastIndexOf(" _");
+            String status = "_UNKNOWN_";
+            if (x >= 0) {
+                status = msg.substring(x).trim();
+                msg = msg.substring(0, x).trim();
+            }
+            Map<String, String> m = new LinkedHashMap<String, String>();
+            m.put(status, zipPath);
+            m.put("info", msg);
+            return Java2Json.format(m) + ",";
+        } else {
+            return zipPath + buf;
         }
     }
 
@@ -590,6 +651,19 @@ public class Log4JDetector {
         // Hopefully this stops symlink cycles.
         // Using CRC-64 of path to save on memory (since we're storing *EVERY* path we come across).
         String path = f.getPath();
+        if (excludes.contains(path)) {
+            System.err.println("-- Info: Skipping [" + path + "] because --excludes mentions it.");
+            return;
+        }
+        File parent = f.getParentFile();
+        while (parent != null) {
+            String parentPath = parent.getPath();
+            if (excludes.contains(parentPath)) {
+                System.err.println("-- Info: Skipping [" + path + "] because --excludes mentions it.");
+                return;
+            }
+            parent = parent.getParentFile();
+        }
         long crc = CRC64.hash(path);
         if (visited.contains(crc)) {
             return;
@@ -626,8 +700,8 @@ public class Log4JDetector {
                     if (isLog4J_1_X) {
                         StringBuilder buf = new StringBuilder();
                         String grandParent = f.getParentFile().getParent();
-                        buf.append(grandParent).append(" contains contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
-                        System.out.println(buf);
+                        buf.append(" contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
+                        System.out.println(prepareOutput(grandParent, buf));
                     } else {
                         maybe = currentPathLower.endsWith(FILE_LOG4J_1);
                     }
@@ -683,7 +757,7 @@ public class Log4JDetector {
                             }
                         }
                         StringBuilder buf = new StringBuilder();
-                        buf.append(f.getParentFile().getParent()).append(" contains Log4J-2.x   ");
+                        buf.append(" contains Log4J-2.x   ");
                         if (isVulnerable) {
                             if (isLog4J_2_10) {
                                 if (isLog4J_2_17) {
@@ -711,7 +785,7 @@ public class Log4JDetector {
                         } else {
                             buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ (Did you remove JndiLookup.class?)");
                         }
-                        System.out.println(buf);
+                        System.out.println(prepareOutput(f.getParentFile().getParent(), buf));
                     }
                 } else if (verbose) {
                     System.err.println("-- Skipping " + f.getPath() + " - Not a zip/jar/war file.");
