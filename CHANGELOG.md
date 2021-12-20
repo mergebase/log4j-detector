@@ -1,7 +1,7 @@
 
 ## To Build Or Download Previous Versions
 
-Please see the tags page: (https://github.com/mergebase/log4j-detector/tags).
+Please see the tags page: https://github.com/mergebase/log4j-detector/tags
 
 ## v2021.12.20
 
