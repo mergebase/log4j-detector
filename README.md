@@ -37,16 +37,16 @@ We currently maintain a collection of [log4j-samples](https://github.com/mergeba
 
 # Example Usage: <a name="itemexample"></a>
 
-java -jar log4j-detector-2021.12.16.jar [path-to-scan] > hits.txt
+java -jar log4j-detector-2021.12.20.jar [path-to-scan] > hits.txt
 
 ![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
 
 # More Example Usage: <a name="itemmore"></a>
 
 ```
-java -jar log4j-detector-2021.12.16.jar ./samples 
+java -jar log4j-detector-2021.12.20.jar ./samples 
 
--- github.com/mergebase/log4j-detector v2021.12.16 (by mergebase.com) analyzing paths (could take a while).
+-- github.com/mergebase/log4j-detector v2021.12.20 (by mergebase.com) analyzing paths (could take a while).
 -- Note: specify the '--verbose' flag to have every file examined printed to STDERR.
 /opt/mergebase/log4j-detector/samples/clt-1.0-SNAPSHOT.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_ :-(
 /opt/mergebase/log4j-detector/samples/infinispan-embedded-query-8.2.12.Final.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(
@@ -81,15 +81,15 @@ java -jar log4j-detector-2021.12.16.jar ./samples
 # Usage <a name="itemusage"></a>
 
 ```
-java -jar log4j-detector-2021.12.16.jar 
+java -jar log4j-detector-2021.12.20.jar 
 
-Usage: java -jar log4j-detector-2021.12.16.jar [--verbose] [paths to scan...]
+Usage: java -jar log4j-detector-2021.12.20.jar [--verbose] [paths to scan...]
 
 Exit codes:  0 = No vulnerable Log4J versions found.
              1 = At least one legacy Log4J 1.x version found.
              2 = At least one vulnerable Log4J version found.
 
-About - MergeBase log4j detector (version 2021.12.16)
+About - MergeBase log4j detector (version 2021.12.20)
 Docs  - https://github.com/mergebase/log4j-detector 
 (C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.
 ```
@@ -100,7 +100,7 @@ Docs  - https://github.com/mergebase/log4j-detector
 git clone https://github.com/mergebase/log4j-detector.git
 cd log4j-detector/
 mvn install
-java -jar target/log4j-detector-2021.12.16.jar
+java -jar target/log4j-detector-2021.12.20.jar
 ```
 # Testing: <a name="itemtesting"></a>
 
