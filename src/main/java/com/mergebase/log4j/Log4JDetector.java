@@ -162,8 +162,8 @@ public class Log4JDetector {
         } else if (foundLog4j1) {
             System.exit(1);
         } else {
-            System.out.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + argsList);
-            System.out.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 or CVE-2021-45046 !  :-) ");
+            System.err.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + argsList);
+            System.err.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 or CVE-2021-45046 !  :-) ");
         }
     }
 
