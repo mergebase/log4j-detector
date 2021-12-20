@@ -223,6 +223,8 @@ public class Log4JDetector {
                 return 1;
             } else if ("zip".equalsIgnoreCase(suffix)
                     || "jar".equalsIgnoreCase(suffix)
+                    || "jpi".equalsIgnoreCase(suffix)
+                    || "hpi".equalsIgnoreCase(suffix)
                     || "war".equalsIgnoreCase(suffix)
                     || "ear".equalsIgnoreCase(suffix)
                     || "aar".equalsIgnoreCase(suffix)) {
