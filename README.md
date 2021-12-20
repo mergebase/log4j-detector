@@ -1,8 +1,8 @@
-<h1><img src='https://raw.githubusercontent.com/mergebase/log4j-detector/master/mergebase-small.png' alt='mergebase logo' /></a></h1>
+<h1><img src='https://raw.githubusercontent.com/mergebase/log4j-detector/master/images/mergebase-small.png' alt='mergebase logo' /></a></h1>
 
 <h1>Log4-detector</h1>
 
-Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/)  and [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
+Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/),   [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/) and [CVE-2021-45105](https://mergebase.com/vulnerability/CVE-2021-45105/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
 
 # Table of Contents
 - [Introduction](#itemdetector)
@@ -39,7 +39,7 @@ We currently maintain a collection of [log4j-samples](https://github.com/mergeba
 
 java -jar log4j-detector-2021.12.20.jar [path-to-scan] > hits.txt
 
-![Terminal output from running java -jar log4j-detector.jar in a terminal](./log4j-detector.png)
+![Terminal output from running java -jar log4j-detector.jar in a terminal](./images/log4j-detector.png)
 
 # More Example Usage: <a name="itemmore"></a>
 
@@ -174,7 +174,7 @@ MergeBase code signing key.  Please run "jarsigner -verbose -verify log4j-detect
 
 # What Is MergeBase All About? <a name="itemmergebase"></a>
 
-![MergeBase](mergebase-small.png)
+![MergeBase](images/mergebase-small.png)
 
 [MergeBase](https://mergebase.com/) is an SCA company (Software Composition Analysis) based in Vancouver, Canada. We're
 similar to companies like Snyk, Sonatype, Blackduck, etc., in that we help companies detect and manage vulnerable
