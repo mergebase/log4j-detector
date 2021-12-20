@@ -524,7 +524,8 @@ public class Log4JDetector {
                 msg = msg.substring(0, x).trim();
             }
             Map<String, String> m = new LinkedHashMap<String, String>();
-            m.put(status, zipPath);
+            m.put("status", status);
+            m.put("path", zipPath);
             m.put("info", msg);
             return Java2Json.format(m) + ",";
         } else {
