@@ -26,8 +26,8 @@ Scanner that detects vulnerable Log4J versions to help teams assess their exposu
 
 # Introduction <a name="itemdetector"></a>
 
-Currently reports `[log4j-core](https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/)` versions 2.3.1, 2.12.3, and 2.17.0 as **\_SAFE\_**, 2.12.2, 2.15.0 and 2.16.0 as **\_OKAY\_** and all other versions as **\_VULNERABLE\_**
-(although it does report pre-2.0-beta9 as "**\_POTENTIALLY_SAFE\_**"). It reports older log4j-1.x `[log4j/log4j](https://repo1.maven.org/maven2/log4j/log4j/)` versions as **\_OLD\_**.
+Currently reports [log4j-core](https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/) versions 2.3.1, 2.12.3, and 2.17.0 as **\_SAFE\_**, 2.12.2, 2.15.0 and 2.16.0 as **\_OKAY\_** and all other versions as **\_VULNERABLE\_**
+(although it does report pre-2.0-beta9 as "**\_POTENTIALLY_SAFE\_**"). It reports older log4j-1.x [log4j/log4j](https://repo1.maven.org/maven2/log4j/log4j/) versions as **\_OLD\_**.
 
 Can correctly detect log4j inside executable spring-boot jars/wars, dependencies blended
 into [uber jars](https://mergebase.com/blog/software-composition-analysis-sca-vs-java-uber-jars/), shaded jars, and even
