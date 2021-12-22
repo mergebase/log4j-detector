@@ -40,21 +40,23 @@ import static com.mergebase.log4j.VersionComparator.compare;
 public class Log4JDetector {
 
     private static final String POM_PROPERTIES = "log4j-core/pom.properties".toLowerCase(Locale.ROOT);
-    private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_3 = "core/Filter.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_4 = "core/Layout.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_5 = "core/LoggerContext.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_1 = "core/LogEvent.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2 = "core/Appender.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_3 = "core/Filter.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_4 = "core/Layout.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_5 = "core/LoggerContext.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_JNDI_LOOKUP = "core/lookup/JndiLookup.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_JNDI_MANAGER = "core/net/JndiManager.".toLowerCase(Locale.ROOT);
+    private static final String FILE_GONE_LOG4J_2_17 = "core/util/SetUtils.".toLowerCase(Locale.ROOT);
 
     private static final String ACTUAL_FILE_LOG4J_2 = "core/Appender.class";
     private static final String ACTUAL_FILE_LOG4J_3 = "core/Filter.class";
     private static final String ACTUAL_FILE_LOG4J_4 = "core/Layout.class";
     private static final String ACTUAL_FILE_LOG4J_5 = "core/LoggerContext.class";
     private static final String ACTUAL_FILE_LOG4J_2_10 = "core/appender/nosql/NoSqlAppender.class";
+    private static final String ACTUAL_FILE_GONE_LOG4J_2_17 = "core/util/SetUtils.class";
     private static final String ACTUAL_FILE_LOG4J_JNDI_LOOKUP = "core/lookup/JndiLookup.class";
     private static final String ACTUAL_FILE_LOG4J_JNDI_MANAGER = "core/net/JndiManager.class";
 
@@ -69,6 +71,9 @@ public class Log4JDetector {
 
     // This occurs in "JndiLookup.class" before 2.12.2
     private static final byte[] IS_LOG4J_NOT_SAFE_2_12_2 = Bytes.fromString("Error looking up JNDI resource [{}].");
+
+    // This occurs in "JndiManager.class" in 2.3.1
+    private static final byte[] IS_LOG4J_SAFE_2_3_1 = Bytes.fromString("Unsupported JNDI URI - {}");
 
     private static boolean verbose = false;
     private static boolean debug = false;
@@ -126,26 +131,26 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.20.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.22.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
             System.out.println();
             System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
             System.out.println("  --stdin      - Parse STDIN for paths to explore.");
             System.out.println("  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
             System.out.println();
-            System.out.println("                 Example: --excludes=[\"/dev\", \"/media\", \"Z:\\TEMP\"]");
+            System.out.println("                 Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.20)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.22)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.20 (by mergebase.com) analyzing paths (could take a while).");
+        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.22 (by mergebase.com) analyzing paths (could take a while).");
         System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         if (json) {
             System.out.println("{\"hits\":[");
@@ -268,12 +273,15 @@ public class Log4JDetector {
             boolean isLog4j2_10 = false;
             boolean hasJndiLookup = false;
             boolean hasJndiManager = false;
+            boolean hasSetUtils = false;
             boolean isLog4J1_X = false;
             boolean isLog4j2_15 = false;
             boolean isLog4j2_16 = false;
             boolean isLog4j2_17 = false;
             boolean isLog4j2_15_override = false;
             boolean isLog4j2_12_2 = false;
+            boolean isLog4j2_12_3 = false;
+            boolean isLog4j2_3_1 = false;
             boolean isLog4j2_12_2_override = false;
             byte[] pomProperties = null;
             String pomPath = null;
@@ -306,12 +314,14 @@ public class Log4JDetector {
                 boolean isClassEntry = fileType == 1;
                 boolean isPomProperties = fileType == 2;
                 boolean needClassBytes = false;
+                final boolean isJndiLookup = pathLower.contains(FILE_LOG4J_JNDI_LOOKUP);
+                final boolean isJndiManager = pathLower.contains(FILE_LOG4J_JNDI_MANAGER);
 
                 if (isPomProperties) {
                     needClassBytes = true;
-                } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
+                } else if (isJndiLookup) {
                     needClassBytes = true;
-                } else if (isClassEntry && pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
+                } else if (isJndiManager) {
                     needClassBytes = true;
                 }
 
@@ -370,21 +380,23 @@ public class Log4JDetector {
                     if (pathLower.endsWith(POM_PROPERTIES)) {
                         pomProperties = bytes;
                         pomPath = "!/" + path;
-                    } else if (pathLower.endsWith(FILE_OLD_LOG4J)) {
+                    } else if (pathLower.contains(FILE_OLD_LOG4J)) {
                         isLog4J1_X = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_1)) {
+                    } else if (pathLower.contains(FILE_LOG4J_1)) {
                         log4jProbe[0] = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_2)) {
+                    } else if (pathLower.contains(FILE_LOG4J_2)) {
                         log4jProbe[1] = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_3)) {
+                    } else if (pathLower.contains(FILE_LOG4J_3)) {
                         log4jProbe[2] = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_4)) {
+                    } else if (pathLower.contains(FILE_LOG4J_4)) {
                         log4jProbe[3] = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_5)) {
+                    } else if (pathLower.contains(FILE_LOG4J_5)) {
                         log4jProbe[4] = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_2_10)) {
+                    } else if (pathLower.contains(FILE_LOG4J_2_10)) {
                         isLog4j2_10 = true;
-                    } else if (pathLower.endsWith(FILE_LOG4J_VULNERABLE)) {
+                    } else if (pathLower.contains(FILE_GONE_LOG4J_2_17)) {
+                        hasSetUtils = true;
+                    } else if (isJndiLookup) {
                         hasJndiLookup = true;
                         if (containsMatch(bytes, INSIDE_LOG4J_2_17_0)) {
                             isLog4j2_17 = true;
@@ -393,7 +405,7 @@ public class Log4JDetector {
                         } else {
                             isLog4j2_12_2 = true;
                         }
-                    } else if (pathLower.endsWith(FILE_LOG4J_SAFE_CONDITION1)) {
+                    } else if (isJndiManager) {
                         hasJndiManager = true;
                         if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
                             isLog4j2_15 = true;
@@ -402,6 +414,9 @@ public class Log4JDetector {
                             }
                         } else {
                             isLog4j2_15_override = true;
+                            if (containsMatch(bytes, IS_LOG4J_SAFE_2_3_1)) {
+                                isLog4j2_3_1 = true;
+                            }
                         }
                     }
                 }
@@ -458,6 +473,10 @@ public class Log4JDetector {
                                 if (isLog4j2_17 || (isLog4j2_15 && !isLog4j2_15_override) || (isLog4j2_12_2 && !isLog4j2_12_2_override)) {
                                     isSafe = true;
                                     isLog4j_2_12_2 = (isLog4j2_12_2 && !isLog4j2_12_2_override);
+                                    if (isLog4j2_17 && hasSetUtils) {
+                                        isLog4j2_12_3 = true;
+                                        isLog4j2_17 = false;
+                                    }
                                 }
                             }
                         }
@@ -476,9 +495,12 @@ public class Log4JDetector {
                         if (isLog4j_2_10_0) {
                             if (isSafe) {
                                 if (isLog4j_2_12_2) {
-                                    buf.append(">= 2.12.2 _SAFE_");
+                                    buf.append("== 2.12.2 _OKAY_");
+                                    foundHits = true;
                                 } else {
-                                    if (isLog4j2_17) {
+                                    if (isLog4j2_12_3) {
+                                        buf.append("== 2.12.3 _SAFE_");
+                                    } else if (isLog4j2_17) {
                                         buf.append(">= 2.17.0 _SAFE_");
                                     } else if (isLog4j2_16) {
                                         buf.append("== 2.16.0 _OKAY_");
@@ -492,7 +514,12 @@ public class Log4JDetector {
                                 buf.append(">= 2.10.0 _VULNERABLE_");
                             }
                         } else {
-                            buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
+                            if (isLog4j2_3_1) {
+                                isSafe = true;
+                                buf.append("== 2.3.1 _SAFE_");
+                            } else {
+                                buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
+                            }
                         }
                     } else {
                         buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ (Did you remove JndiLookup.class?)");
@@ -697,7 +724,7 @@ public class Log4JDetector {
                     scan(f);
                 } else if (1 == fileType) {
                     String currentPathLower = f.getPath().toLowerCase(Locale.ROOT);
-                    boolean isLog4J_1_X = currentPathLower.endsWith(FILE_OLD_LOG4J);
+                    boolean isLog4J_1_X = currentPathLower.contains(FILE_OLD_LOG4J);
                     boolean maybe = false;
                     if (isLog4J_1_X) {
                         StringBuilder buf = new StringBuilder();
@@ -705,15 +732,25 @@ public class Log4JDetector {
                         buf.append(" contains Log4J-1.x   <= 1.2.17 _OLD_ :-|");
                         System.out.println(prepareOutput(grandParent, buf));
                     } else {
-                        maybe = currentPathLower.endsWith(FILE_LOG4J_1);
+                        maybe = currentPathLower.contains(FILE_LOG4J_1);
                     }
                     if (maybe) {
                         boolean isVulnerable = false;
+                        boolean isLog4J_2_3_1 = false;
                         boolean isLog4J_2_10 = false;
                         boolean isLog4J_2_12_2 = false;
                         boolean isLog4J_2_15 = false;
                         boolean isLog4J_2_16 = false;
                         boolean isLog4J_2_17 = false;
+
+                        byte[] jndiManagerBytes = null;
+                        File jndiManager = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER);
+                        final boolean jndiManagerExists = jndiManager.exists();
+                        if (jndiManager.canRead()) {
+                            jndiManagerBytes = Bytes.fileToBytes(jndiManager);
+                        }
+
+                        boolean hasSetUtils = exists(f.getParent() + "/../" + ACTUAL_FILE_GONE_LOG4J_2_17);
                         if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_2)) {
                             if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_3)) {
                                 if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_4)) {
@@ -736,21 +773,28 @@ public class Log4JDetector {
                                                     System.err.println("-- Problem: no permission to read file - " + jndiLookup.getPath() + " (required to determine if 2.12.2, will assume not)");
                                                 }
 
-                                                if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER)) {
-                                                    File jndiManager = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JNDI_MANAGER);
-                                                    if (jndiManager.canRead()) {
-                                                        byte[] bytes = Bytes.fileToBytes(jndiManager);
-                                                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_15_0)) {
+                                                if (jndiManagerExists) {
+                                                    if (jndiManagerBytes != null) {
+                                                        if (containsMatch(jndiManagerBytes, IS_LOG4J_SAFE_2_15_0)) {
                                                             isLog4J_2_15 = true;
-                                                            if (containsMatch(bytes, IS_LOG4J_SAFE_2_16_0)) {
+                                                            if (containsMatch(jndiManagerBytes, IS_LOG4J_SAFE_2_16_0)) {
                                                                 isLog4J_2_16 = true;
-                                                            } else {
-                                                                foundHits = true;
                                                             }
+                                                            foundHits = true;
+
+                                                        } else if (!isLog4J_2_17) {
+                                                            foundHits = true;
                                                         }
-                                                    } else {
-                                                        System.err.println("-- Problem: no permission to read file - " + jndiManager.getPath() + " (required to determine if 2.16.0, will assume not)");
                                                     }
+                                                } else {
+                                                    System.err.println("-- Problem: no permission to read file - " + jndiManager.getPath() + " (required to determine if 2.16.0, will assume not)");
+                                                }
+
+                                            } else {
+                                                if (jndiManagerBytes != null && containsMatch(jndiManagerBytes, IS_LOG4J_SAFE_2_3_1)) {
+                                                    isLog4J_2_3_1 = true;
+                                                } else {
+                                                    foundHits = true;
                                                 }
                                             }
                                         }
@@ -763,26 +807,33 @@ public class Log4JDetector {
                         if (isVulnerable) {
                             if (isLog4J_2_10) {
                                 if (isLog4J_2_17) {
-                                    buf.append(">= 2.17.0 _SAFE_");
+                                    if (hasSetUtils) {
+                                        buf.append(">= 2.12.3 _SAFE_");
+                                    } else {
+                                        buf.append(">= 2.17.0 _SAFE_");
+                                    }
                                 } else if (isLog4J_2_15) {
+                                    foundHits = true;
                                     if (isLog4J_2_16) {
                                         buf.append("== 2.16.0 _OKAY_");
-                                        foundHits = true;
                                     } else {
                                         buf.append("== 2.15.0 _OKAY_");
-                                        foundHits = true;
                                     }
                                 } else {
+                                    foundHits = true;
                                     if (isLog4J_2_12_2) {
-                                        buf.append(">= 2.12.2 _SAFE_");
+                                        buf.append("== 2.12.2 _OKAY_");
                                     } else {
                                         buf.append(">= 2.10.0 _VULNERABLE_");
-                                        foundHits = true;
                                     }
                                 }
                             } else {
-                                buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
-                                foundHits = true;
+                                if (isLog4J_2_3_1) {
+                                    buf.append("== 2.3.1 _SAFE_");
+                                } else {
+                                    buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
+                                    foundHits = true;
+                                }
                             }
                         } else {
                             buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ (Did you remove JndiLookup.class?)");
