@@ -26,7 +26,7 @@ Scanner that detects vulnerable Log4J versions to help teams assess their exposu
 
 # Introduction <a name="itemdetector"></a>
 
-Currently reports `log4j-core` versions 2.12.2 and 2.17.0 as **\_SAFE\_**, 2.16.0 and 2.15.0 as **\_OKAY\_** and all other versions as **\_VULNERABLE\_**
+Currently reports `log4j-core` versions 2.3.1, 2.12.3, and 2.17.0 as **\_SAFE\_**, 2.12.2, 2.15.0 and 2.16.0 as **\_OKAY\_** and all other versions as **\_VULNERABLE\_**
 (although it does report pre-2.0-beta9 as "**\_POTENTIALLY_SAFE\_**").
 
 Can correctly detect log4j inside executable spring-boot jars/wars, dependencies blended
@@ -58,10 +58,14 @@ java -jar log4j-detector-2021.12.22.jar ./samples
 /opt/mergebase/log4j-detector/samples/log4j-core-2.0.2.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_
 /opt/mergebase/log4j-detector/samples/log4j-core-2.0.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_
 /opt/mergebase/log4j-detector/samples/log4j-core-2.10.0.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_
-/opt/mergebase/log4j-detector/samples/log4j-core-2.12.2.jar contains Log4J-2.x   >= 2.12.2 _SAFE_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.12.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.12.2.jar contains Log4J-2.x   == 2.12.2 _OKAY_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.12.3.jar contains Log4J-2.x   >= 2.12.3 _SAFE_
 /opt/mergebase/log4j-detector/samples/log4j-core-2.14.1.jar contains Log4J-2.x   >= 2.10.0 _VULNERABLE_
-/opt/mergebase/log4j-detector/samples/log4j-core-2.15.0.jar contains Log4J-2.x   >= 2.15.0 _OKAY_
-/opt/mergebase/log4j-detector/samples/log4j-core-2.16.0.jar contains Log4J-2.x   >= 2.16.0 _SAFE_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.15.0.jar contains Log4J-2.x   == 2.15.0 _OKAY_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.16.0.jar contains Log4J-2.x   == 2.16.0 _OKAY_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.17.0.jar contains Log4J-2.x   >= 2.17.0 _SAFE_
+/opt/mergebase/log4j-detector/samples/log4j-core-2.3.1.jar contains Log4J-2.x   == 2.3.1 _SAFE_
 /opt/mergebase/log4j-detector/samples/log4j-core-2.4.1.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_
 /opt/mergebase/log4j-detector/samples/log4j-core-2.9.1.jar contains Log4J-2.x   >= 2.0-beta9 (< 2.10.0) _VULNERABLE_
 ```
@@ -70,9 +74,9 @@ java -jar log4j-detector-2021.12.22.jar ./samples
 
 **\_VULNERABLE\_** -> You need to upgrade or remove this file.
 
-**\_OKAY\_** -> We only report this for Log4J versions 2.15.0 and 2.16.0. We recommend upgrading to 2.17.0.
+**\_OKAY\_** -> We only report this for Log4J versions 2.12.2, 2.15.0, and 2.16.0. We recommend upgrading to 2.17.0.
 
-**\_SAFE\_** -> We currently only report this for Log4J versions 2.17.0 and 2.12.2.
+**\_SAFE\_** -> We currently only report this for Log4J versions 2.3.1, 2.12.3, and 2.17.0 (and greater).
 
 **\_OLD\_** -> You are safe from CVE-2021-44228, but should plan to upgrade because Log4J 1.2.x has been EOL for 7 years and has several known-vulnerabilities.
 
@@ -133,7 +137,7 @@ Many scanners (including GitHub's own [Dependabot](https://github.com/dependabot
 At [MergeBase](https://mergebase.com/) we pride ourselves on our scan accuracy. You're already busy enough patching and defending your systems. We don't want you to waste your time with false positives. That's why we don't report any hits against `log4j-api`.
 
 
-## Why Report About 2.10.0, 2.12.2, 2.15.0, 2.16.0, and 2.17.0 ? <a name="item2.10.0"></a>
+## Why Report About 2.3.1, 2.10.0, 2.12.2, 2.12.3, 2.15.0, 2.16.0, and 2.17.0 ? <a name="item2.10.0"></a>
 
 Version 2.10.0 is important because that's the first version where Log4J's vulnerable "message lookup feature" can be disabled via Log4J configuration.
 
@@ -141,8 +145,8 @@ Version 2.12.2 is important because it's a Java 7 compatible version of Log4J th
 
 Versions 2.15.0 and 2.16.0 are important because these are the first versions where Log4J's default out-of-the-box configuration is not vulnerable to CVE-2021-44228.
 
-And version 2.17.0 is important because it's not vulnerable to more recently discovered CVEs such as CVE-2021-45046 and CVE-2021-45105.
-Despite these being much less serious vulnerabilities, we anticipate everyone will want to patch to 2.17.0.
+And versions 2.3.1, 2.12.3, and 2.17.0 are important because they are not vulnerable to more recently discovered CVEs such as CVE-2021-45046 and CVE-2021-45105.
+Despite these being much less serious vulnerabilities, we anticipate everyone will want to patch to one of 2.3.1, 2.12.3, or 2.17.0.
 
 ## What are those "file1.war!/path/to/file2.zip!/path/to/file3.jar!/path/to/log4j.jar" results about? <a name="itemwar"></a>
 
@@ -169,7 +173,7 @@ to build it, and since this tool has zero dependencies, it shouldn't take too lo
 satisfaction. If you don't trust Maven you can go directly into the "src/main/java/com/mergebase/log4j" directory and
 type "javac \*.java". That works, too!
 
-We also sign the pre-compiled jar we keep in the root of the repository (./log4j-detector-2021.12.22.jar) with the
+We also sign the pre-compiled jars we keep in the root of the repository (e.g., ./log4j-detector-2021.12.22.jar) with the
 MergeBase code signing key.  Please run "jarsigner -verbose -verify log4j-detector-2021.12.22.jar" to confirm this.
 
 # What Is MergeBase All About? <a name="itemmergebase"></a>
