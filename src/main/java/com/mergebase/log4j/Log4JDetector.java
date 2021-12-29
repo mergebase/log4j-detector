@@ -232,6 +232,7 @@ public class Log4JDetector {
                     || "hpi".equalsIgnoreCase(suffix)
                     || "war".equalsIgnoreCase(suffix)
                     || "ear".equalsIgnoreCase(suffix)
+                    || "car".equalsIgnoreCase(suffix)
                     || "aar".equalsIgnoreCase(suffix)) {
                 return 0;
             }
