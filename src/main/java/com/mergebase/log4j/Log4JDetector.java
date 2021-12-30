@@ -132,7 +132,12 @@ public class Log4JDetector {
                 String s = new String(b, Bytes.UTF_8);
                 stdinLines = Strings.intoLines(s);
             } else {
-                File f = new File(argOrig);
+                File f;
+                if (argOrig.length() == 2 && ':' == argOrig.charAt(1) && Character.isLetter(argOrig.charAt(0))) {
+                    f = new File(argOrig + File.separator);
+                } else {
+                    f = new File(argOrig);
+                }
                 if (!f.exists()) {
                     System.err.println("Invalid file: [" + f.getPath() + "]");
                     System.exit(102);
@@ -168,7 +173,12 @@ public class Log4JDetector {
             System.out.println("{\"hits\":[");
         }
         for (String arg : argsList) {
-            File dir = new File(arg);
+            File dir;
+            if (arg.length() == 2 && ':' == arg.charAt(1) && Character.isLetter(arg.charAt(0))) {
+                dir = new File(arg + File.separator);
+            } else {
+                dir = new File(arg);
+            }
             analyze(dir);
         }
         if (json) {
