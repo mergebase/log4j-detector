@@ -49,6 +49,8 @@ public class Log4JDetector {
     private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_JNDI_LOOKUP = "core/lookup/JndiLookup.".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_JNDI_MANAGER = "core/net/JndiManager.".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_JDBC_DSCS = "core/appender/db/jdbc/DataSourceConnectionSource.".toLowerCase(Locale.ROOT);
+
     private static final String FILE_GONE_LOG4J_2_17 = "core/util/SetUtils.".toLowerCase(Locale.ROOT);
 
     private static final String ACTUAL_FILE_LOG4J_2 = "core/Appender.class";
@@ -59,6 +61,7 @@ public class Log4JDetector {
     private static final String ACTUAL_FILE_GONE_LOG4J_2_17 = "core/util/SetUtils.class";
     private static final String ACTUAL_FILE_LOG4J_JNDI_LOOKUP = "core/lookup/JndiLookup.class";
     private static final String ACTUAL_FILE_LOG4J_JNDI_MANAGER = "core/net/JndiManager.class";
+    private static final String ACTUAL_FILE_LOG4J_JDBC_DSCS = "core/appender/db/jdbc/DataSourceConnectionSource.class";
 
     // This occurs in "JndiManager.class" in 2.15.0
     private static final byte[] IS_LOG4J_SAFE_2_15_0 = Bytes.fromString("Invalid JNDI URI - {}");
@@ -74,6 +77,9 @@ public class Log4JDetector {
 
     // This occurs in "JndiManager.class" in 2.3.1
     private static final byte[] IS_LOG4J_SAFE_2_3_1 = Bytes.fromString("Unsupported JNDI URI - {}");
+
+    // This occurs in "DataSourceConnectionSource.class" in 2.17.1 and friends.
+    private static final byte[] IS_CVE_2021_44832_SAFE = Bytes.fromString("JNDI must be enabled by setting log4j2.enableJndiJdbc=true");
 
     private static boolean verbose = false;
     private static boolean debug = false;
@@ -131,7 +137,7 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.22.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
             System.out.println();
             System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
             System.out.println("  --stdin      - Parse STDIN for paths to explore.");
@@ -143,14 +149,14 @@ public class Log4JDetector {
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.22)");
+            System.out.println("About - MergeBase log4j detector (version 2021.12.29)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.22 (by mergebase.com) analyzing paths (could take a while).");
+        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.29 (by mergebase.com) analyzing paths (could take a while).");
         System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         if (json) {
             System.out.println("{\"hits\":[");
@@ -186,11 +192,12 @@ public class Log4JDetector {
         four[1] = four[2];
         four[2] = four[3];
         four[3] = in.read();
+        File f = new File("blah");
         return four[3];
     }
 
-    private static boolean isZipSentinel(int[] four) {
-        return four[0] == 0x50 && four[1] == 0x4B && four[2] == 3 && four[3] == 4;
+    private static boolean isZipSentinel(int[] chunk) {
+        return chunk[0] == 0x50 && chunk[1] == 0x4B && chunk[2] == 3 && chunk[3] == 4;
     }
 
     private static final Comparator<File> FILES_ORDER_BY_NAME = new Comparator<File>() {
@@ -227,12 +234,9 @@ public class Log4JDetector {
             } else if ("class".equalsIgnoreCase(suffix)) {
                 return 1;
             } else if ("zip".equalsIgnoreCase(suffix)
-                    || "jar".equalsIgnoreCase(suffix)
                     || "jpi".equalsIgnoreCase(suffix)
                     || "hpi".equalsIgnoreCase(suffix)
-                    || "war".equalsIgnoreCase(suffix)
-                    || "ear".equalsIgnoreCase(suffix)
-                    || "aar".equalsIgnoreCase(suffix)) {
+                    || suffix.endsWith("ar")) {
                 return 0;
             }
         }
@@ -273,6 +277,7 @@ public class Log4JDetector {
             boolean isLog4j2_10 = false;
             boolean hasJndiLookup = false;
             boolean hasJndiManager = false;
+            boolean hasJdbcJndiDisabled = false;
             boolean hasSetUtils = false;
             boolean isLog4J1_X = false;
             boolean isLog4j2_15 = false;
@@ -316,12 +321,9 @@ public class Log4JDetector {
                 boolean needClassBytes = false;
                 final boolean isJndiLookup = pathLower.contains(FILE_LOG4J_JNDI_LOOKUP);
                 final boolean isJndiManager = pathLower.contains(FILE_LOG4J_JNDI_MANAGER);
+                final boolean isJdbcConnManager = pathLower.contains(FILE_LOG4J_JDBC_DSCS);
 
-                if (isPomProperties) {
-                    needClassBytes = true;
-                } else if (isJndiLookup) {
-                    needClassBytes = true;
-                } else if (isJndiManager) {
+                if (isPomProperties || isJndiLookup || isJndiManager || isJdbcConnManager) {
                     needClassBytes = true;
                 }
 
@@ -380,6 +382,10 @@ public class Log4JDetector {
                     if (pathLower.endsWith(POM_PROPERTIES)) {
                         pomProperties = bytes;
                         pomPath = "!/" + path;
+                    } else if (isJdbcConnManager) {
+                        if (containsMatch(bytes, IS_CVE_2021_44832_SAFE)) {
+                            hasJdbcJndiDisabled = true;
+                        }
                     } else if (pathLower.contains(FILE_OLD_LOG4J)) {
                         isLog4J1_X = true;
                     } else if (pathLower.contains(FILE_LOG4J_1)) {
@@ -414,9 +420,9 @@ public class Log4JDetector {
                             }
                         } else {
                             isLog4j2_15_override = true;
-                            if (containsMatch(bytes, IS_LOG4J_SAFE_2_3_1)) {
-                                isLog4j2_3_1 = true;
-                            }
+                        }
+                        if (containsMatch(bytes, IS_LOG4J_SAFE_2_3_1)) {
+                            isLog4j2_3_1 = true;
                         }
                     }
                 }
@@ -499,9 +505,17 @@ public class Log4JDetector {
                                     foundHits = true;
                                 } else {
                                     if (isLog4j2_12_3) {
-                                        buf.append("== 2.12.3 _SAFE_");
+                                        if (hasJdbcJndiDisabled) {
+                                            buf.append("== 2.12.4 _SAFE_");
+                                        } else {
+                                            buf.append("== 2.12.3 _OKAY_");
+                                        }
                                     } else if (isLog4j2_17) {
-                                        buf.append(">= 2.17.0 _SAFE_");
+                                        if (hasJdbcJndiDisabled) {
+                                            buf.append(">= 2.17.1 _SAFE_");
+                                        } else {
+                                            buf.append("== 2.17.0 _OKAY_");
+                                        }
                                     } else if (isLog4j2_16) {
                                         buf.append("== 2.16.0 _OKAY_");
                                         foundHits = true;
@@ -516,7 +530,11 @@ public class Log4JDetector {
                         } else {
                             if (isLog4j2_3_1) {
                                 isSafe = true;
-                                buf.append("== 2.3.1 _SAFE_");
+                                if (hasJdbcJndiDisabled) {
+                                    buf.append("== 2.3.2 _SAFE_");
+                                } else {
+                                    buf.append("== 2.3.1 _OKAY_");
+                                }
                             } else {
                                 buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
                             }
@@ -750,6 +768,15 @@ public class Log4JDetector {
                             jndiManagerBytes = Bytes.fileToBytes(jndiManager);
                         }
 
+                        boolean hasJdbcJndiDisabled = false;
+                        File jdbcConn = new File(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_JDBC_DSCS);
+                        if (jdbcConn.canRead()) {
+                            byte[] jdbcConnBytes = Bytes.fileToBytes(jdbcConn);
+                            if (containsMatch(jdbcConnBytes, IS_CVE_2021_44832_SAFE)) {
+                                hasJdbcJndiDisabled = true;
+                            }
+                        }
+
                         boolean hasSetUtils = exists(f.getParent() + "/../" + ACTUAL_FILE_GONE_LOG4J_2_17);
                         if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_2)) {
                             if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_3)) {
@@ -808,9 +835,17 @@ public class Log4JDetector {
                             if (isLog4J_2_10) {
                                 if (isLog4J_2_17) {
                                     if (hasSetUtils) {
-                                        buf.append(">= 2.12.3 _SAFE_");
+                                        if (hasJdbcJndiDisabled) {
+                                            buf.append("== 2.12.4 _SAFE_");
+                                        } else {
+                                            buf.append("== 2.12.3 _OKAY_");
+                                        }
                                     } else {
-                                        buf.append(">= 2.17.0 _SAFE_");
+                                        if (hasJdbcJndiDisabled) {
+                                            buf.append(">= 2.17.1 _SAFE_");
+                                        } else {
+                                            buf.append("== 2.17.0 _OKAY_");
+                                        }
                                     }
                                 } else if (isLog4J_2_15) {
                                     foundHits = true;
@@ -829,7 +864,11 @@ public class Log4JDetector {
                                 }
                             } else {
                                 if (isLog4J_2_3_1) {
-                                    buf.append("== 2.3.1 _SAFE_");
+                                    if (hasJdbcJndiDisabled) {
+                                        buf.append("== 2.3.2 _SAFE_");
+                                    } else {
+                                        buf.append("== 2.3.1 _OKAY_");
+                                    }
                                 } else {
                                     buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
                                     foundHits = true;

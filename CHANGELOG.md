@@ -3,6 +3,10 @@
 
 Please see the tags page: https://github.com/mergebase/log4j-detector/tags
 
+## v2021.12.29
+
+- Ability to detect log4j-core-2.3.2.jar, log4j-core-2.12.4.jar, and log4j-core-2.17.1.jar (all are \_SAFE\_).
+
 ## v2021.12.22
 
 - Ability to detect log4j-core-2.3.1.jar and log4j-core-2.12.3.jar (both are \_SAFE\_).
