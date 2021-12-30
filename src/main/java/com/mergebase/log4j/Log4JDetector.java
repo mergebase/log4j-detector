@@ -88,7 +88,13 @@ public class Log4JDetector {
     private static boolean foundHits = false;
     private static boolean foundLog4j1 = false;
 
+    private static File currentDir = null;
+    private static String currentPath = null;
+
     public static void main(String[] args) throws IOException {
+        currentDir = canonicalize(new File("."));
+        currentPath = currentDir.getPath();
+
         List<String> argsList = new ArrayList<String>();
         Collections.addAll(argsList, args);
 
@@ -560,6 +566,12 @@ public class Log4JDetector {
     }
 
     private static String prepareOutput(String zipPath, StringBuilder buf) {
+        if (zipPath.startsWith(currentPath)) {
+            zipPath = zipPath.substring(currentPath.length());
+            if (zipPath.startsWith(File.separator)) {
+                zipPath = zipPath.substring(1);
+            }
+        }
         if (json) {
             String msg = buf.toString().trim();
             int x = msg.lastIndexOf(" _");
@@ -684,7 +696,7 @@ public class Log4JDetector {
 
     private static final HashSet<Long> visited = new HashSet<Long>();
 
-    private static void analyze(File f) {
+    private static File canonicalize(File f) {
         try {
             f = f.getCanonicalFile();
         } catch (Exception e) {
@@ -694,6 +706,11 @@ public class Log4JDetector {
             }
             f = f.getAbsoluteFile();
         }
+        return f;
+    }
+
+    private static void analyze(File f) {
+        f = canonicalize(f);
 
         // Hopefully this stops symlink cycles.
         // Using CRC-64 of path to save on memory (since we're storing *EVERY* path we come across).
