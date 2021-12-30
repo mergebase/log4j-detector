@@ -93,6 +93,7 @@ public class Log4JDetector {
 
     private static File currentDir = null;
     private static String currentPath = null;
+    private static boolean printFullPaths = false;
 
     public static void main(String[] args) throws IOException {
         currentDir = canonicalize(new File("."));
@@ -541,12 +542,14 @@ public class Log4JDetector {
                                             buf.append("== 2.12.4 _SAFE_");
                                         } else {
                                             buf.append("== 2.12.3 _OKAY_");
+                                            foundHits = true;
                                         }
                                     } else if (isLog4j2_17) {
                                         if (hasJdbcJndiDisabled) {
                                             buf.append(">= 2.17.1 _SAFE_");
                                         } else {
                                             buf.append("== 2.17.0 _OKAY_");
+                                            foundHits = true;
                                         }
                                     } else if (isLog4j2_16) {
                                         buf.append("== 2.16.0 _OKAY_");
@@ -566,6 +569,7 @@ public class Log4JDetector {
                                     buf.append("== 2.3.2 _SAFE_");
                                 } else {
                                     buf.append("== 2.3.1 _OKAY_");
+                                    foundHits = true;
                                 }
                             } else {
                                 buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
@@ -592,10 +596,14 @@ public class Log4JDetector {
     }
 
     private static String prepareOutput(String zipPath, StringBuilder buf) {
-        if (zipPath.startsWith(currentPath)) {
-            zipPath = zipPath.substring(currentPath.length());
-            if (zipPath.startsWith(File.separator)) {
-                zipPath = zipPath.substring(1);
+        if (!printFullPaths) {
+            if (zipPath.startsWith(currentPath)) {
+                zipPath = zipPath.substring(currentPath.length());
+                if (zipPath.startsWith(File.separator)) {
+                    zipPath = zipPath.substring(1);
+                }
+            } else {
+                printFullPaths = true;
             }
         }
         if (json) {
@@ -882,12 +890,14 @@ public class Log4JDetector {
                                             buf.append("== 2.12.4 _SAFE_");
                                         } else {
                                             buf.append("== 2.12.3 _OKAY_");
+                                            foundHits = true;
                                         }
                                     } else {
                                         if (hasJdbcJndiDisabled) {
                                             buf.append(">= 2.17.1 _SAFE_");
                                         } else {
                                             buf.append("== 2.17.0 _OKAY_");
+                                            foundHits = true;
                                         }
                                     }
                                 } else if (isLog4J_2_15) {
@@ -911,6 +921,7 @@ public class Log4JDetector {
                                         buf.append("== 2.3.2 _SAFE_");
                                     } else {
                                         buf.append("== 2.3.1 _OKAY_");
+                                        foundHits = true;
                                     }
                                 } else {
                                     buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_");
