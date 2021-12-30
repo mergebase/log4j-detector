@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -83,6 +84,8 @@ public class Log4JDetector {
 
     private static boolean verbose = false;
     private static boolean debug = false;
+    private static boolean stdin = false;
+    private static Long stdin_count = 0L;
     private static boolean json = false;
     private static Set<String> excludes = new TreeSet<String>();
     private static boolean foundHits = false;
@@ -109,6 +112,9 @@ public class Log4JDetector {
             } else if ("--verbose".equals(argOrig)) {
                 verbose = true;
                 it.remove();
+            } else if ("--stdin".equals(argOrig)) {
+                stdin = true;
+                it.remove();
             } else if ("--json".equals(argOrig)) {
                 json = true;
                 it.remove();
@@ -127,7 +133,7 @@ public class Log4JDetector {
                         }
                     }
                 }
-            } else if ("--stdin".equals(argOrig)) {
+            } else if ("--stdin-args".equals(argOrig)) {
                 it.remove();
                 byte[] b = Bytes.streamToBytes(System.in);
                 String s = new String(b, Bytes.UTF_8);
@@ -147,12 +153,13 @@ public class Log4JDetector {
         }
         argsList.addAll(stdinLines);
 
-        if (argsList.isEmpty()) {
+        if (argsList.isEmpty() && !stdin) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--stdin-args] [--exclude=X] [paths to scan...]");
             System.out.println();
             System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
-            System.out.println("  --stdin      - Parse STDIN for paths to explore.");
+            System.out.println("  --stdin      - Parse STDIN for paths to explore, but without prefreshing them (parallel and small memory footprint).");
+            System.out.println("  --stdin-args - Parse STDIN for paths to explore and start scan after all lines are read.");
             System.out.println("  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
             System.out.println();
             System.out.println("                 Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
@@ -170,6 +177,15 @@ public class Log4JDetector {
 
         System.err.println("-- github.com/mergebase/log4j-detector v2021.12.29 (by mergebase.com) analyzing paths (could take a while).");
         System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
+        if (stdin) {
+            System.out.println("-- Note: you specified '--stdin' flag to read files to examine from STDIN.");
+            Scanner scanner = new Scanner(System.in);
+            while (scanner.hasNextLine()) {
+                File dir = new File(scanner.nextLine());
+                analyze(dir);
+                stdin_count++;
+            }
+		}
         if (json) {
             System.out.println("{\"hits\":[");
         }
@@ -190,7 +206,7 @@ public class Log4JDetector {
         } else if (foundLog4j1) {
             System.exit(1);
         } else {
-            System.err.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + argsList);
+            System.out.println("-- No vulnerable Log4J 2.x samples found in supplied paths: " + (stdin ? "<stdin>#" + stdin_count + " + " : "") + argsList);
             System.err.println("-- Congratulations, the supplied paths are not vulnerable to CVE-2021-44228 or CVE-2021-45046 !  :-) ");
         }
     }
