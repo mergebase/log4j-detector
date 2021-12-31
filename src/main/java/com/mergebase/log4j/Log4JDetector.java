@@ -209,7 +209,6 @@ public class Log4JDetector {
         four[1] = four[2];
         four[2] = four[3];
         four[3] = in.read();
-        File f = new File("blah");
         return four[3];
     }
 
