@@ -101,8 +101,10 @@ public class Log4JDetector {
 
         Iterator<String> it = argsList.iterator();
         List<String> stdinLines = new ArrayList<String>();
+		int argIdx = 0;
         while (it.hasNext()) {
             final String argOrig = it.next().trim();
+			System.out.println("Arg #" + argIdx++ + ": " + argOrig);
             if ("--debug".equals(argOrig)) {
                 debug = true;
                 it.remove();
@@ -122,7 +124,9 @@ public class Log4JDetector {
                         List<Object> list = (List) o;
                         for (Object obj : list) {
                             if (obj != null) {
-                                excludes.add(String.valueOf(obj));
+								
+								String excl_canon = canonicalize(new File(String.valueOf(obj))).getPath();
+                                excludes.add(excl_canon);
                             }
                         }
                     }
