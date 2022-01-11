@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mergebase</groupId>
     <artifactId>log4j-detector</artifactId>
-    <version>latest</version>
+    <version>20220112-0009-oom</version>
     <licenses>
         <license>
             <name>GPL-3.0-only</name>
