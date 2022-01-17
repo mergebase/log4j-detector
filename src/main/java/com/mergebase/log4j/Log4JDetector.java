@@ -81,9 +81,13 @@ public class Log4JDetector {
     // This occurs in "DataSourceConnectionSource.class" in 2.17.1 and friends.
     private static final byte[] IS_CVE_2021_44832_SAFE = Bytes.fromString("JNDI must be enabled by setting log4j2.enableJndiJdbc=true");
 
+    private static final String SWITCH_OOM_THRESHOLD = "--oomThreshold=";
+
     private static boolean verbose = false;
     private static boolean debug = false;
     private static boolean json = false;
+    private static int oomThreshold = 10;
+    private static int oomCounter = 0;
     private static Set<String> excludes = new TreeSet<String>();
     private static boolean foundHits = false;
     private static boolean foundLog4j1 = false;
@@ -132,6 +136,19 @@ public class Log4JDetector {
                 byte[] b = Bytes.streamToBytes(System.in);
                 String s = new String(b, Bytes.UTF_8);
                 stdinLines = Strings.intoLines(s);
+            } else if (argOrig.startsWith(SWITCH_OOM_THRESHOLD)) {
+                String thresholdString = argOrig.substring(SWITCH_OOM_THRESHOLD.length());
+                it.remove();
+                try {
+                    oomThreshold = Integer.parseInt(thresholdString);
+                    // don't need to check against negative numbers here - the simply the first OOM will lead to
+                    // abort as we begin counting by 0;
+                } catch(NumberFormatException e) {
+                    System.err.println("Illegal value for " + SWITCH_OOM_THRESHOLD + "<" + thresholdString + ">, you need to specify an int. " +
+                      "Aborting ... Stack Trace Follows:");
+                    e.printStackTrace();
+                    System.exit(103);
+                }
             } else {
                 File f;
                 if (argOrig.length() == 2 && ':' == argOrig.charAt(1) && Character.isLetter(argOrig.charAt(0))) {
@@ -149,26 +166,31 @@ public class Log4JDetector {
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-<upstreamversion>.jar [--verbose] [--json] " +
+              "[--stdin] [--exclude=X] [--oomThreshold=Y] [paths to scan...]");
             System.out.println();
-            System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
-            System.out.println("  --stdin      - Parse STDIN for paths to explore.");
-            System.out.println("  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
+            System.out.println("  --json                 - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
+            System.out.println("  --stdin                - Parse STDIN for paths to explore.");
+            System.out.println("  --exclude=X            - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
             System.out.println();
-            System.out.println("                 Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
+            System.out.println("                          Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
+            System.out.println();
+            System.out.println("  --oomThreshold         - Specifies how many OutOfMemoryErrors should be catched during analyzing ZIP files before " +
+              "aborting the run as an int. If 0 or negative, no OutOfMemoryError will be catched. If omitted, defaults to 10.");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.29)");
+            System.out.println("About - MergeBase log4j detector (version <upstreamversion>)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.29 (by mergebase.com) analyzing paths (could take a while).");
+        System.err.println("-- github.com/mergebase/log4j-detector (by mergebase.com) <upstreamversion> analyzing " +
+          "paths (could take a while).");
         System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         if (json) {
             System.out.println("{\"hits\":[");
@@ -666,6 +688,26 @@ public class Log4JDetector {
         } catch (Exception e) {
             System.err.println("-- Problem: " + zipFile.getPath() + " FAILED: " + e);
             e.printStackTrace(System.err);
+        } catch (OutOfMemoryError oom) {
+            // Safety Guard for multiple OutOfMemories on low free Heap
+            // Threshold oomThreshold is checked to limit this
+            // in some cases a new OutOfMemory might rise from within the catch block - not attempting to handle that
+            // though ...
+            if(oomCounter < oomThreshold) {
+                oomCounter++;
+                System.err.println("-- Problem: OutOfMemoryError for path: <" + zipFile.getPath() + ">");
+                System.err.println("oomCounter now: <" + oomCounter + ">, Stack Trace follows:");
+                oom.printStackTrace(System.err);
+            } else {
+                oomCounter++;
+                System.err.println("-- Problem: OutOfMemoryError for path: <" + zipFile.getPath() + ">");
+                System.err.println("oom Threshold reached by oomCounter now: <" + oomCounter + ">, ABORTING, Stack " +
+                  "Trace follows:");
+                oom.printStackTrace(System.err);
+                System.err.flush();
+                System.exit(104);
+            }
+
         } finally {
             myZipper.close();
         }

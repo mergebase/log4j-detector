@@ -88,14 +88,16 @@ old-hits/log4j-core-2.0-beta2.jar contains Log4J-2.x   <= 2.0-beta8 _POTENTIALLY
 ```
 java -jar log4j-detector-2021.12.29.jar 
 
-Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]
+Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [--oomThreshold=Y] [paths to scan...]
 
-  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)
-  --stdin      - Read STDIN for paths to explore (one path per line)
-  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.
+  --json                 - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)
+  --stdin                - Read STDIN for paths to explore (one path per line)
+  --exclude=X            - Where X is a JSON list containing full paths to exclude. Must be valid JSON.
 
-                 Example: --exclude='["/dev", "/media", "Z:\TEMP"]'
+                           Example: --exclude='["/dev", "/media", "Z:\TEMP"]'
 
+  --oomThreshold         - Specifies how many OutOfMemoryErrors should be catched during analyzing ZIP files before aborting the run as an int.
+                           If 0 or negative, no OutOfMemoryError will be catched. If omitted, defaults to 10.
 Exit codes:  0 = No vulnerable Log4J versions found.
              1 = At least one legacy Log4J 1.x version found.
              2 = At least one vulnerable Log4J version found.
