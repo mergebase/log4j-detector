@@ -19,6 +19,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.DosFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -81,9 +86,14 @@ public class Log4JDetector {
     // This occurs in "DataSourceConnectionSource.class" in 2.17.1 and friends.
     private static final byte[] IS_CVE_2021_44832_SAFE = Bytes.fromString("JNDI must be enabled by setting log4j2.enableJndiJdbc=true");
 
+    private static final String SWITCH_IGNORE_SYMLINKS = "--ignoreSymLinks";
+    private static final String SWITCH_IGNORE_REPARSE_POINTS = "--ignoreReparsePoints";
+
     private static boolean verbose = false;
     private static boolean debug = false;
     private static boolean json = false;
+    private static boolean ignoreSymLinks = false;
+    private static boolean ignoreReparsePoints = false;
     private static Set<String> excludes = new TreeSet<String>();
     private static boolean foundHits = false;
     private static boolean foundLog4j1 = false;
@@ -91,6 +101,8 @@ public class Log4JDetector {
     private static File currentDir = null;
     private static String currentPath = null;
     private static boolean printFullPaths = false;
+
+    private static Method methodIsReparsePoint = null;
 
     public static void main(String[] args) throws IOException {
         currentDir = canonicalize(new File("."));
@@ -132,6 +144,12 @@ public class Log4JDetector {
                 byte[] b = Bytes.streamToBytes(System.in);
                 String s = new String(b, Bytes.UTF_8);
                 stdinLines = Strings.intoLines(s);
+            } else if (SWITCH_IGNORE_SYMLINKS.equals(argOrig)) {
+                ignoreSymLinks = true;
+                it.remove();
+            } else if (SWITCH_IGNORE_REPARSE_POINTS.equals(argOrig)) {
+                ignoreReparsePoints = true;
+                it.remove();
             } else {
                 File f;
                 if (argOrig.length() == 2 && ':' == argOrig.charAt(1) && Character.isLetter(argOrig.charAt(0))) {
@@ -145,30 +163,45 @@ public class Log4JDetector {
                 }
             }
         }
+
+        if(!ignoreSymLinks && ignoreReparsePoints) {
+            // Only the addition of ignoreReparsePoints is allowed as the implementation of Reparse Points is
+            // considered experimental; this keeps unexpected results to a minimum
+            System.err.println("Illegal option mix: " + SWITCH_IGNORE_REPARSE_POINTS + " is only legal if " + SWITCH_IGNORE_SYMLINKS + "has been " +
+              "specified as well.");
+            System.exit(105);
+        }
+
         argsList.addAll(stdinLines);
 
         if (argsList.isEmpty()) {
             System.out.println();
-            System.out.println("Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]");
+            System.out.println("Usage: java -jar log4j-detector-<upstreamversion>.jar [--verbose] [--json] " +
+              "[--stdin] [--exclude=X] [--ignoreSymLinks] [--ignoreReparsePoints] [paths to scan...]");
             System.out.println();
-            System.out.println("  --json       - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
-            System.out.println("  --stdin      - Parse STDIN for paths to explore.");
-            System.out.println("  --exclude=X  - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
+            System.out.println("  --json                 - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)");
+            System.out.println("  --stdin                - Parse STDIN for paths to explore.");
+            System.out.println("  --exclude=X            - Where X is a JSON list containing full paths to exclude. Must be valid JSON.");
             System.out.println();
-            System.out.println("                 Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
+            System.out.println("                          Example: --exclude='[\"/dev\", \"/media\", \"Z:\\TEMP\"]' ");
+            System.out.println();
+            System.out.println("  --ignoreSymLinks       - Use this to ignore symlinks. If not specified, symlinks are followed");
+            System.out.println("  --ignoreReparsePoints  - Use this only on Windows to ignore Reparse Points. If not specified, Reparse Points are " +
+              "followed. This option is experimental and only legal if --ignoreSymLinks was set.");
             System.out.println();
             System.out.println("Exit codes:  0 = No vulnerable Log4J versions found.");
             System.out.println("             1 = At least one legacy Log4J 1.x version found.");
             System.out.println("             2 = At least one vulnerable Log4J 2.x version found.");
             System.out.println();
-            System.out.println("About - MergeBase log4j detector (version 2021.12.29)");
+            System.out.println("About - MergeBase log4j detector (version <upstreamversion>)");
             System.out.println("Docs  - https://github.com/mergebase/log4j-detector ");
             System.out.println("(C) Copyright 2021 Mergebase Software Inc. Licensed to you via GPLv3.");
             System.out.println();
             System.exit(100);
         }
 
-        System.err.println("-- github.com/mergebase/log4j-detector v2021.12.29 (by mergebase.com) analyzing paths (could take a while).");
+        System.err.println("-- github.com/mergebase/log4j-detector (by mergebase.com) <upstreamversion> analyzing " +
+          "paths (could take a while).");
         System.err.println("-- Note: specify the '--verbose' flag to have every file examined printed to STDERR.");
         if (json) {
             System.out.println("{\"hits\":[");
@@ -751,6 +784,78 @@ public class Log4JDetector {
             return;
         } else {
             visited.add(crc);
+        }
+
+        if(ignoreSymLinks && Files.isSymbolicLink(f.toPath())){
+            System.err.println("-- Info: Skipping symlink [" + path + "] because --ignoreSymLinks is specified.");
+            return;
+        } else if(ignoreSymLinks && ignoreReparsePoints){
+            // ignoreReparsePoints is only legal on Windows so we can assume to be on Windows here
+            // The following is Windows specific to exclude Reparse Points as they are not considered symlinks by
+            // Files.isSymbolicLink
+            try {
+                // Code adapted from Stackoverflow: https://stackoverflow.com/a/29647840
+                DosFileAttributes attrs = Files.readAttributes(f.toPath(), DosFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                if(methodIsReparsePoint == null) {
+                    // attrs should be an instance of sun.nio.fs.WindowsFileAttributes on Windows, which has a
+                    // method isReparsePoint
+                    // The WindowsFileAttributes class is part of the jdk since 1.7 and still is in all Java 11 JVMs
+                    // (Oracle, Open JDK, Zulu that have  been tested). It is not by default importable (seems to be
+                    // a Maven constraint)
+                    // Don't want to import anyway as this would break every call, not only if this code snipped is
+                    // executed
+                    try {
+                        methodIsReparsePoint = attrs.getClass().getDeclaredMethod("isReparsePoint");
+                        methodIsReparsePoint.setAccessible(true);
+                    } catch ( Exception e) {
+
+                        // JVM seems to not support Reparse Points - might be --illegaö-access=permit needs to be set
+                        System.err.println("-- Problem: Cannot determine Reparse Points in current setup. You can try" +
+                          " one of the following: (1) Omit --ignoreReparsePoints (2) Try another JVM (3) set " +
+                          "--illegal-access=permit JVM Option (4) do further analysis.");
+
+                        System.err.println("-- Java Home: <" + System.getProperty("java.home") + ">.");
+                        System.err.println("-- Java Vendor: <" + System.getProperty("java.vendor") + ">.");
+                        System.err.println("-- Java Version: <" + System.getProperty("java.version") + ">.");
+                        System.err.println("-- OS Arch: <" + System.getProperty("os.arch") + ">.");
+                        System.err.println("-- OS Name: <" + System.getProperty("os.name") + ">.");
+                        System.err.println("-- OS Version: <" + System.getProperty("os.version") + ">.");
+                        System.err.println("-- Security Manager: <" + System.getSecurityManager() + ">.");
+                        System.err.println("-- Aborting due to Exception <" + e.getMessage () + ">, " +
+                          "Stack Trace follows:");
+                        e.printStackTrace();
+                        System.exit(105);
+                    }
+
+                }
+                if(attrs != null) {
+                    boolean isReparsePoint = (boolean) methodIsReparsePoint.invoke(attrs);
+                    if(isReparsePoint) {
+                        // Not symlink but Reparse Point should be a Junction or some old Windows Reparse Point not
+                        // considered a symlink
+                        System.err.println("-- Info: Skipping Junction/ReparsePoint [" + path + "] because " +
+                          "--ignoreReparsePoints is specified.");
+                        return;
+                    }
+                } else {
+                    // Don't ignore it but give out an info
+                    System.err.println("-- Info: File Attributes could not be read, so no ReparsePoint possible for <" +
+                      path + ">. Continuing the scan for this path.");
+                }
+            } catch (AccessDeniedException e) {
+                // Something is generally wrong, aborting here
+                System.err.println("-- Problem: Missing permissions for path: <" + f.getPath() + ">. " +
+                  "Stack Trace follows:");
+                e.printStackTrace();
+                return;
+            } catch ( Exception e) {
+                // Something is generally wrong, aborting here
+                System.err.println("-- Problem: Aborting due to unexpected Exception <" + e.getMessage () + ">, " +
+                    "Stack Trace follows:");
+                e.printStackTrace();
+                System.exit(106);
+            }
+
         }
 
         if (f.isDirectory()) {
