@@ -794,6 +794,7 @@ public class Log4JDetector {
             // The following is Windows specific to exclude Reparse Points as they are not considered symlinks by
             // Files.isSymbolicLink
             try {
+                // Code adapted from Stackoverflow: https://stackoverflow.com/a/29647840
                 DosFileAttributes attrs = Files.readAttributes(f.toPath(), DosFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
                 if(methodIsReparsePoint == null) {
                     // attrs should be an instance of sun.nio.fs.WindowsFileAttributes on Windows, which has a
