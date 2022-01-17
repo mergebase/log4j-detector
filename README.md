@@ -88,7 +88,8 @@ old-hits/log4j-core-2.0-beta2.jar contains Log4J-2.x   <= 2.0-beta8 _POTENTIALLY
 ```
 java -jar log4j-detector-2021.12.29.jar 
 
-Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--exclude=X] [paths to scan...]
+Usage: java -jar log4j-detector-2021.12.29.jar [--verbose] [--json] [--stdin] [--ignoreSymLinks] [--ignoreReparsePoints] [--exclude=X] [paths to 
+scan...]
 
   --json                 - Output STDOUT results in JSON.  (Errors/warning still emitted to STDERR)
   --stdin                - Read STDIN for paths to explore (one path per line)
