@@ -40,7 +40,7 @@ import static com.mergebase.log4j.VersionComparator.compare;
 public class Log4JDetector {
 
     private static final String POM_PROPERTIES = "log4j-core/pom.properties".toLowerCase(Locale.ROOT);
-    private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.".toLowerCase(Locale.ROOT);
+    private static final String FILE_OLD_LOG4J = "log4j/nt/NTEventLogAppender.".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_3 = "core/Filter.".toLowerCase(Locale.ROOT);
